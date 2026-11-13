@@ -1,1 +1,2581 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Robux Clicker X • Pet Evolution</title>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<style>
+:root{
+  --bg:#0a0e1a;--panel:#121a2e;--panel2:#0f1628;--line:#2a3a5c;--text:#f0f4ff;--muted:#8b9bb8;
+  --gold:#ffd34e;--gold2:#ffb52e;--green:#43e3a2;--blue:#6f8cff;--purple:#a78bfa;--pink:#f472b6;
+  --red:#f87171;--orange:#fb923c;--cyan:#22d3ee;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow-x:hidden}
+body{color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(ellipse at 50% -20%,#1e2d5a 0%,#0d1428 40%,#070b16 80%);min-height:100vh}
+button{font:inherit;cursor:pointer;border:0;color:inherit;background:none;-webkit-tap-highlight-color:transparent}
+.app{max-width:1280px;margin:0 auto;padding:16px 16px 80px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#ffe27a,#ff9f35);display:grid;place-items:center;color:#1a1520;font-size:24px;font-weight:900;box-shadow:0 8px 28px #ffbf4b55}
+.brand-text{font-weight:950;letter-spacing:.4px;font-size:18px}
+.brand-text small{display:block;color:var(--muted);font-size:10px;letter-spacing:1.5px;margin-top:2px;font-weight:700}
+.header-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{border:1px solid var(--line);background:#111a2e;border-radius:999px;padding:7px 12px;color:#b0c0e0;font-size:11px;font-weight:700}
+.pill.gold{border-color:#6b5a20;background:#2a2410;color:var(--gold)}
+.panel{background:linear-gradient(160deg,#152038ee,#0e1526f5);border:1px solid var(--line);border-radius:20px;box-shadow:0 16px 48px #0006}
+.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-bottom:18px}
+.click-panel{padding:24px;text-align:center;position:relative;overflow:hidden}
+.click-panel::before{content:"";position:absolute;width:280px;height:280px;border-radius:50%;background:#ffce4b14;filter:blur(20px);top:10px;left:50%;transform:translateX(-50%);pointer-events:none}
+.eyebrow{color:var(--muted);font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
+.balance{font-size:clamp(36px,6.5vw,64px);font-weight:1000;letter-spacing:-2.5px;margin:4px 0;color:var(--gold);text-shadow:0 0 32px #ffce4b40}
+.balance span{font-size:.32em;letter-spacing:0;color:#fff;font-weight:800}
+.rate-row{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+.rate{color:var(--green);font-weight:800;font-size:12px}
+.rate.auto{color:var(--cyan)}
+.orb-wrap{height:240px;display:grid;place-items:center;position:relative;margin:8px 0}
+.orb{width:190px;height:190px;border-radius:50%;background:radial-gradient(circle at 32% 22%,#fff6c8 0%,#ffdb64 14%,#ffb52e 48%,#e77b18 78%,#a94a17 100%);box-shadow:inset -14px -18px 28px #7c321b66,inset 10px 10px 22px #fff7b0aa,0 16px 55px #ffb52e55;position:relative;display:grid;place-items:center;transition:transform .07s;user-select:none;border:none}
+.orb::after{content:"";position:absolute;inset:10px;border:2px solid #fff6b866;border-radius:50%}
+.orb b{font-size:78px;color:#fff9d9;text-shadow:0 4px 0 #b65c22,0 8px 18px #9b3d1c;font-weight:1000;z-index:1;pointer-events:none}
+.orb:active{transform:scale(.93)}
+.orb.crit{animation:critPulse .35s ease}
+@keyframes critPulse{0%{transform:scale(1)}40%{transform:scale(1.08)}100%{transform:scale(1)}}
+.orb-hint{color:var(--muted);font-size:11px;margin-top:-2px}
+.click-btn{background:linear-gradient(135deg,#ffe27a,#ffad36);color:#2e1c08;border-radius:14px;padding:13px 24px;font-weight:1000;box-shadow:0 8px 24px #ffb52e40;transition:.15s;margin-top:12px;font-size:14px}
+.click-btn:hover{transform:translateY(-2px);filter:brightness(1.07)}
+.click-btn:active{transform:scale(.97)}
+.side{padding:18px;display:flex;flex-direction:column;gap:12px}
+.section-title{font-weight:950;font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:#0b1224;border:1px solid #24324e;border-radius:12px;padding:11px}
+.stat small{color:var(--muted);display:block;font-size:10px;font-weight:600}
+.stat strong{display:block;font-size:17px;margin-top:3px;font-weight:900}
+.progress{height:7px;background:#1e2a44;border-radius:8px;overflow:hidden;margin-top:8px}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#53e7a5,#c5ff82);border-radius:8px;transition:width .35s}
+.daily{background:linear-gradient(110deg,#1a2748,#121c36);border:1px solid #2e4570;border-radius:14px;padding:12px}
+.daily p{margin:5px 0 8px;color:#a8b8d8;font-size:11px;line-height:1.4}
+.mini-btn{background:#2d4570;padding:8px 11px;border-radius:9px;font-size:11px;font-weight:800;transition:.15s}
+.mini-btn:hover{background:#3a5a8a}
+.mini-btn:disabled{opacity:.4;cursor:not-allowed}
+.egg-quantity-panel{max-width:460px;margin:10px auto 0;padding:12px;border:1px solid var(--line);border-radius:14px;background:#0b1224aa}
+.egg-quantity-presets{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.egg-quantity-presets .mini-btn.active{background:#6d54b5;outline:1px solid #b7a2ff}
+.egg-quantity-label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}
+.egg-quantity-input{width:min(100%,240px);padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#091326;color:var(--text);font-size:18px;font-weight:900;text-align:center;outline:none}
+.egg-quantity-input:focus{border-color:#9b83ea;box-shadow:0 0 0 2px #9b83ea33}
+.egg-quantity-summary{display:flex;justify-content:center;gap:8px 14px;flex-wrap:wrap;margin-top:9px;color:var(--muted);font-size:10px}
+.egg-quantity-summary strong{color:var(--text);font-variant-numeric:tabular-nums}
+
+.tabs{display:flex;gap:6px;margin:16px 0 12px;flex-wrap:wrap}
+.tab{background:#111a2e;border:1px solid var(--line);color:#8fa0c0;padding:9px 13px;border-radius:11px;font-weight:800;font-size:12px;transition:.15s}
+.tab:hover{background:#1a2640}
+.tab.active{background:#26375f;border-color:#5874c2;color:#fff}
+.shop-head{display:flex;align-items:flex-end;justify-content:space-between;margin:0 2px 10px;gap:10px;flex-wrap:wrap}
+.shop-head p{color:var(--muted);font-size:11px;margin:3px 0 0}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.item{background:linear-gradient(150deg,#152038,#0f1628);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:7px;min-height:175px;transition:.2s}
+.item:hover{border-color:#3d5580;transform:translateY(-2px)}
+.item.rank-locked{opacity:.62;filter:saturate(.72);border-style:dashed}
+.item-rank{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;border-radius:999px;background:#23375d;color:#bcd0ff;font-size:9px;font-weight:900;letter-spacing:.25px;width:max-content}
+.item-rank.unlocked{background:#173d35;color:#8af0c6}
+.item .buy.locked{background:#242b3d;border-color:#35415b;color:#a2aec4}
+.item .buy.affordable{background:linear-gradient(135deg,#ffe27a,#ffad36);border-color:#ffcf5c;color:#34220a}
+.item-top{display:flex;justify-content:space-between;align-items:center}
+.item-icon{font-size:26px;width:44px;height:44px;border-radius:12px;background:#1e2d4a;display:grid;place-items:center}
+.owned{font-size:9px;color:var(--green);font-weight:900;letter-spacing:.3px}
+.item h3{margin:0;font-size:13px;font-weight:900}
+.item p{margin:0;color:var(--muted);font-size:10px;line-height:1.4;min-height:28px;flex:1}
+.buy{margin-top:auto;background:#243658;border:1px solid #3a5588;border-radius:10px;padding:9px;font-weight:900;font-size:11px;transition:.15s}
+.buy:hover{background:#2f4570}
+.buy:disabled{opacity:.35;cursor:not-allowed}
+.bottom{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.info{padding:16px}
+.info p{color:var(--muted);font-size:11px;line-height:1.55;margin-top:6px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,24px);background:#f7d66c;color:#1f1608;padding:11px 18px;border-radius:12px;font-weight:900;font-size:12px;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 10px 28px #0008;z-index:100;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.float{position:absolute;color:#fff2a5;font-weight:1000;pointer-events:none;animation:floatUp .85s ease-out forwards;text-shadow:0 2px 8px #0009;font-size:15px;z-index:5}
+.float.crit{color:#ff6b9d;font-size:18px}
+@keyframes floatUp{to{transform:translateY(-90px) scale(1.25);opacity:0}}
+.spark{position:absolute;width:6px;height:6px;background:#fff2a5;border-radius:50%;pointer-events:none;animation:sparkOut .6s ease-out forwards;z-index:4}
+@keyframes sparkOut{to{transform:translate(var(--x),var(--y)) scale(0);opacity:0}}
+footer{text-align:center;color:#5a6a88;font-size:10px;padding:20px 0 10px}
+.modal-bg{position:fixed;inset:0;background:#000a;z-index:50;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.modal-bg.show{display:flex}
+.modal{background:linear-gradient(160deg,#152038,#0e1526);border:1px solid var(--line);border-radius:20px;padding:22px;max-width:420px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 60px #000a}
+.modal h2{font-size:18px;font-weight:950;margin-bottom:12px}
+.modal-close{float:right;font-size:20px;color:var(--muted);cursor:pointer;line-height:1}
+.modal-close:hover{color:#fff}
+.nav-bottom{position:fixed;bottom:0;left:0;right:0;background:#0c1224ee;border-top:1px solid var(--line);display:flex;justify-content:center;gap:4px;padding:8px 8px 10px;z-index:40;backdrop-filter:blur(12px)}
+.nav-btn{flex:1;max-width:90px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:10px;color:var(--muted);font-size:10px;font-weight:700;transition:.15s}
+.nav-btn span{font-size:18px}
+.nav-btn.active,.nav-btn:hover{color:#fff;background:#1a2744}
+.panel-section{display:none}
+.panel-section.active{display:block}
+.pet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.pet-card{background:#0e1628;border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center;position:relative}
+.pet-card.equipped{border-color:var(--gold);box-shadow:0 0 16px #ffd34e33}
+.pet-icon{font-size:36px;margin:4px 0}
+.pet-name{font-size:12px;font-weight:900}
+.pet-rarity{font-size:9px;font-weight:800;margin:3px 0}
+.rarity-common{color:#a0aec0}.rarity-uncommon{color:#48bb78}.rarity-rare{color:#4299e1}.rarity-epic{color:#9f7aea}.rarity-legendary{color:#ed8936}.rarity-mythic{color:#f687b3}
+.pet-power{font-size:10px;color:var(--muted)}
+.egg-area{text-align:center;padding:20px}
+.egg{font-size:80px;cursor:pointer;transition:transform .2s;display:inline-block;filter:drop-shadow(0 8px 20px #0006)}
+.egg:hover{transform:scale(1.08) rotate(-3deg)}
+.egg.shake{animation:eggShake .5s ease}
+@keyframes eggShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-12deg) scale(1.05)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(8deg)}}
+.ach-grid{display:grid;grid-template-columns:1fr;gap:8px}
+.ach{background:#0e1628;border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center}
+.ach.done{border-color:#2d6a4f;background:#0d1f18}
+.ach-icon{font-size:24px;width:40px;text-align:center}
+.ach-info{flex:1}
+.ach-info strong{font-size:12px;display:block}
+.ach-info span{font-size:10px;color:var(--muted)}
+.lb-list{list-style:none}
+.lb-list li{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;margin-bottom:6px;background:#0e1628;border:1px solid var(--line);font-size:12px}
+.lb-list li.me{border-color:var(--gold);background:#1a1810}
+.lb-rank{font-weight:900;width:28px;color:var(--muted)}
+.lb-list li:nth-child(1) .lb-rank{color:var(--gold)}
+.lb-list li:nth-child(2) .lb-rank{color:#c0c0c0}
+.lb-list li:nth-child(3) .lb-rank{color:#cd7f32}
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1e2a44;font-size:13px}
+.settings-row:last-child{border:0}
+.toggle{width:44px;height:24px;background:#2a3a5c;border-radius:12px;position:relative;cursor:pointer;transition:.2s}
+.toggle.on{background:#3d8b6e}
+.toggle::after{content:"";position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:.2s}
+.toggle.on::after{left:23px}
+.rebirth-box{text-align:center;padding:16px}
+.rebirth-box .big{font-size:28px;font-weight:1000;color:var(--purple);margin:8px 0}
+.btn-purple{background:linear-gradient(135deg,#7c5cbf,#5b3d9e);color:#fff;padding:12px 20px;border-radius:12px;font-weight:900;font-size:13px;box-shadow:0 6px 20px #5b3d9e55}
+.btn-purple:disabled{opacity:.4;cursor:not-allowed}
+.btn-red{background:#5c2a3a;color:#f8b4c4;padding:10px 16px;border-radius:10px;font-weight:800;font-size:12px}
+.level-bar{height:6px;background:#1e2a44;border-radius:6px;overflow:hidden;margin-top:6px}
+.level-bar i{display:block;height:100%;background:linear-gradient(90deg,#6f8cff,#a78bfa);border-radius:6px;transition:width .3s}
+.offline-banner{background:linear-gradient(90deg,#1a3a2a,#122a20);border:1px solid #2d6a4f;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;display:none;align-items:center;gap:10px}
+.offline-banner.show{display:flex}
+.crit-text{position:absolute;font-weight:1000;color:#ff6b9d;font-size:14px;pointer-events:none;animation:floatUp .9s ease-out forwards;text-shadow:0 0 10px #ff6b9d88}
+@media(max-width:780px){
+  .hero{grid-template-columns:1fr}
+  .click-panel{padding:18px}
+  .orb-wrap{height:200px}
+  .orb{width:160px;height:160px}
+  .orb b{font-size:64px}
+  .shop-grid{grid-template-columns:repeat(2,1fr)}
+  .bottom{grid-template-columns:1fr}
+  .app{padding-bottom:90px}
+}
+@media(max-width:420px){
+  .shop-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .item{padding:10px;min-height:160px}
+  .item h3{font-size:12px}
+  .balance{font-size:40px}
+  .nav-btn{font-size:9px}
+}
+/* Mode / Auth overlays - same theme */
+.hidden{display:none!important}
+.overlay{position:fixed;inset:0;background:radial-gradient(ellipse at 50% -20%,#1e2d5a 0%,#0d1428 40%,#070b16 80%);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:14px}
+.mode-card{width:min(340px,100%);padding:18px 20px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(160deg,#152038ee,#0e1526f5);text-align:left;cursor:pointer;transition:.2s}
+.mode-card:hover{border-color:var(--blue);transform:translateY(-2px)}
+.mode-card strong{display:block;font-size:15px;margin-bottom:4px}
+.mode-card span{color:var(--muted);font-size:12px}
+.auth-card{width:min(380px,100%);padding:24px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(160deg,#152038,#0e1526)}
+.auth-card h2{margin:0 0 14px;text-align:center;font-size:18px}
+.auth-card input{width:100%;padding:12px 14px;margin-bottom:10px;border-radius:12px;border:1px solid var(--line);background:#0b1224;color:var(--text);font-size:14px}
+.auth-actions{display:flex;gap:8px}
+.auth-actions button{flex:1;padding:12px;border-radius:12px;font-weight:900;font-size:13px}
+.btn-gold{background:linear-gradient(135deg,#ffe27a,#ffad36);color:#2e1c08}
+.btn-dim{background:#1a2744;border:1px solid var(--line)}
+.auth-err{color:var(--red);font-size:12px;text-align:center;min-height:16px;margin-top:8px}
+.back-link{text-align:center;color:var(--muted);font-size:12px;margin-top:12px;cursor:pointer}
+.extra-box{background:linear-gradient(160deg,#152038,#0e1526);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.extra-box h3{font-size:13px;font-weight:900;margin-bottom:10px}
+.extra-box input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#0b1224;color:var(--text);margin-bottom:8px;font-size:13px}
+.row{display:flex;gap:8px}
+.row input{flex:1}
+
+/* ROBUX CLICKER X — refreshed visual layer */
+:root{--bg:#070b17;--panel:#111a31;--line:#2d4169;--muted:#9aaaca;--gold:#ffe27a;--gold2:#ffad36;--green:#55efb2;--cyan:#51dfff;--purple:#b69aff}
+body{background:radial-gradient(ellipse at 12% 0%,#24386b 0,transparent 34%),radial-gradient(ellipse at 90% 15%,#40245f 0,transparent 28%),linear-gradient(145deg,#070b17,#0a1022 52%,#090d1b);background-attachment:fixed}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.23;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:38px 38px;mask-image:linear-gradient(to bottom,#000,transparent 85%)}
+.app{max-width:1360px;padding-top:22px}
+header{padding:12px 14px;border:1px solid #34466c;background:#0d162bd9;border-radius:20px;backdrop-filter:blur(16px);box-shadow:0 15px 45px #0005}
+.logo{background:linear-gradient(145deg,#fff0a5,#ffc447 48%,#ff8b36);box-shadow:0 0 0 5px #ffcf4930,0 12px 32px #ffb52e55}
+.brand-text{letter-spacing:.8px}
+.panel{border:1px solid #314568;background:linear-gradient(145deg,#172541ed,#0d1629f5);box-shadow:0 20px 60px #0006,inset 0 1px #ffffff0b;backdrop-filter:blur(12px)}
+.click-panel{background:radial-gradient(ellipse at 50% 25%,#5b4a2435,transparent 48%),linear-gradient(145deg,#172541f2,#10192e)}
+.balance{text-shadow:0 0 18px #ffcf4b77,0 0 48px #ffb52e44}
+.orb{width:210px;height:210px;border:1px solid #fff7c6aa;background:radial-gradient(circle at 30% 20%,#fffbd2 0%,#ffe47f 12%,#ffbd43 42%,#f28a24 72%,#a94a1b 100%);box-shadow:inset -17px -20px 32px #73301466,inset 12px 12px 26px #fffac1cc,0 0 0 10px #ffca4b12,0 0 55px #ffb52e77,0 24px 55px #0007}
+.orb b{font-size:88px;text-shadow:0 5px 0 #b65c22,0 10px 22px #9b3d1c}
+.click-btn{background:linear-gradient(110deg,#fff0a0,#ffd14d 45%,#ff9f35);box-shadow:0 8px 28px #ffb52e44,inset 0 1px #ffffffaa;letter-spacing:.4px}
+.click-btn:hover{box-shadow:0 12px 35px #ffb52e66}
+.stat,.daily,.item,.pet-card,.ach{border-color:#293d61;background:linear-gradient(145deg,#111e37,#0b1427)}
+.stat strong{font-size:19px}
+.tabs{padding:6px;background:#0b1427;border:1px solid #293d61;border-radius:15px}
+.tab{padding:10px 16px}
+.tab.active{background:linear-gradient(120deg,#314b7d,#4e4382);box-shadow:0 5px 18px #0004}
+.item{min-height:190px;padding:16px;position:relative;overflow:hidden}
+.item:before{content:"";position:absolute;inset:0 auto auto 0;width:100%;height:2px;background:linear-gradient(90deg,transparent,#6e94ff,transparent);opacity:.6}
+.item:hover{transform:translateY(-4px);border-color:#6888c5;box-shadow:0 15px 28px #0005}
+.item-icon{background:linear-gradient(145deg,#263d66,#302d58);box-shadow:inset 0 1px #ffffff1b}
+.buy{background:linear-gradient(110deg,#273e67,#354a78);border-color:#4d6796}
+.buy:not(:disabled):hover{background:linear-gradient(110deg,#3a568c,#514b8d)}
+.pet-overview{padding:16px;margin:0 0 14px;display:grid;grid-template-columns:1fr;gap:12px}
+.pet-overview p{color:var(--muted);font-size:11px;margin-top:5px;line-height:1.5}
+.equipped-slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.equipped-slot{min-height:84px;border:1px dashed #52658d;background:#0b1427;border-radius:14px;display:grid;place-items:center;text-align:center;padding:8px;color:var(--muted);font-size:10px}
+.equipped-slot.filled{border-style:solid;border-color:#8a7441;background:linear-gradient(145deg,#302a1b,#151b2d);color:#fff}
+.equipped-slot .slot-icon{font-size:27px;line-height:1.2}
+.equipped-slot strong{font-size:10px;margin-top:4px}
+.equipped-slot span{font-size:9px;color:var(--gold)}
+.pet-section-head{margin:0 0 10px}
+.pet-grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px}
+.pet-card{padding:14px;cursor:pointer;transition:.18s;overflow:hidden}
+.pet-card:hover{border-color:#718bc4;transform:translateY(-3px)}
+.pet-card.equipped{border-color:#f3ca62;box-shadow:0 0 0 1px #f3ca6244,0 0 24px #f3ca6222}
+.pet-card{cursor:pointer}.pet-card-actions{display:flex;gap:6px;margin-top:9px}.pet-card-actions button{flex:1;padding:7px 5px;border-radius:8px;font-size:9px;font-weight:900;background:#283c62;color:#e5edff}.pet-card-actions .sell{background:#5b293b;color:#ffc0cf}.pet-detail-icon{font-size:72px;text-align:center;margin:8px 0;filter:drop-shadow(0 6px 12px #0008)}.pet-detail-name{text-align:center;font-size:20px;font-weight:950}.pet-detail-rarity{text-align:center;font-size:12px;font-weight:950;margin:5px 0 14px}.pet-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}.pet-detail-stat{background:#0b1427;border:1px solid #293d61;border-radius:11px;padding:10px}.pet-detail-stat small{display:block;color:var(--muted);font-size:9px}.pet-detail-stat strong{display:block;font-size:13px;margin-top:4px;overflow-wrap:anywhere}.pet-detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pet-detail-actions button{padding:11px;border-radius:10px;font-size:11px;font-weight:900}.pet-detail-actions .equip{background:#344f80}.pet-detail-actions .sell{background:#713047;color:#ffd3df}
+.pet-card .pet-icon{font-size:42px;filter:drop-shadow(0 4px 8px #0008)}
+.pet-card .pet-name{font-size:13px}
+.pet-power{font-weight:800;color:#c5d4f4!important;margin-top:5px}
+.pet-action{display:inline-block;margin-top:9px;padding:6px 10px;border-radius:8px;background:#283c62;color:#e5edff;font-size:9px;font-weight:900}
+.pet-card.equipped .pet-action{background:#57451e;color:#ffe28a}
+.rarity-common{color:#a0aec0}.rarity-uncommon{color:#48d69a}.rarity-rare{color:#56adff}.rarity-epic{color:#b69aff}.rarity-legendary{color:#ffad50}.rarity-mythic{color:#ff7fc0}.rarity-secret{color:#ff647e;text-shadow:0 0 10px #ff647e55}.rarity-celestial{color:#fff0a2;text-shadow:0 0 12px #d8a8ff99}
+.rarity-secret.pet-rarity:after{content:" ✦"}.rarity-celestial.pet-rarity:after{content:" ✧"}.rarity-divine{color:#ffdf72;text-shadow:0 0 12px #ffdf7266}.rarity-eternal{color:#8cf7ff;text-shadow:0 0 12px #8cf7ff66}.rarity-infinite{color:#c5a4ff;text-shadow:0 0 14px #a78bfa99}.rarity-nonillion{color:#fff;text-shadow:0 0 8px #fff,0 0 20px #f0abfc,0 0 34px #8b5cf6}
+.pet-help{color:var(--muted);font-size:11px;margin-top:12px;text-align:center}
+.profile-card p{color:var(--muted);font-size:11px;line-height:1.5;margin-top:6px}
+.profile-edit-row{display:flex;gap:8px;margin-top:12px}
+.profile-edit-row input{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#091326;color:var(--text)}
+.profile-edit-row button{white-space:nowrap}
+.ach.done{box-shadow:inset 3px 0 #43d99a}
+.nav-bottom{background:#090f20ed;border-top-color:#293d61}
+.nav-btn.active{background:linear-gradient(145deg,#2b4169,#28264e);color:#fff}
+.modal{border-color:#52658b;background:linear-gradient(150deg,#1a2948,#10182d)}
+.pill{background:#111d35;border-color:#34496e}
+footer{color:#8192b5}
+@media(max-width:780px){.orb{width:178px;height:178px}.orb b{font-size:72px}.equipped-slots{gap:6px}.equipped-slot{min-height:78px;padding:5px}.pet-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){.app{padding-left:10px;padding-right:10px}.header-right{gap:5px}.pill{padding:6px 9px}.pet-card{padding:10px}.profile-edit-row{flex-direction:column}}
+.event-strip{display:inline-flex;align-items:center;justify-content:center;margin:6px auto 4px;padding:7px 12px;border:1px solid #596a9b;border-radius:999px;background:#1c2b4f;color:#dce8ff;font-size:10px;font-weight:900;letter-spacing:.2px}
+.event-strip.active{border-color:#a68bff;background:linear-gradient(100deg,#503c88,#293d70);color:#fff;box-shadow:0 0 20px #8b5cf655}
+.powerup-status{display:block;min-height:28px;margin:3px auto 0;color:#aebdd9;font-size:10px;line-height:1.4;text-align:center}
+.powerup-status.active{color:#ffe28a;font-weight:900;text-shadow:0 0 12px #ffcf4b44}
+.golden-robux{position:absolute;z-index:8;top:8px;right:calc(50% - 130px);width:62px;height:62px;border-radius:50%;border:2px solid #fff0a0;background:radial-gradient(circle at 30% 25%,#fff9c9,#ffd34e 45%,#e58a20 100%);box-shadow:0 0 0 7px #ffd34e22,0 0 35px #ffd34eaa,0 8px 20px #0008;font-size:33px;animation:goldenFloat 1s ease-in-out infinite alternate;cursor:pointer}
+@keyframes goldenFloat{from{transform:translateY(0) rotate(-8deg) scale(1)}to{transform:translateY(-10px) rotate(8deg) scale(1.08)}}
+.theme-select{min-width:130px;padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:#0b1224;color:var(--text);font:inherit;font-size:11px}
+body[data-theme="ocean"]{background:radial-gradient(ellipse at 12% 0%,#164d70 0,transparent 36%),radial-gradient(ellipse at 90% 15%,#174e65 0,transparent 30%),linear-gradient(145deg,#04101b,#071c2b 52%,#07111d);background-attachment:fixed}
+body[data-theme="nebula"]{background:radial-gradient(ellipse at 12% 0%,#4a2c78 0,transparent 36%),radial-gradient(ellipse at 90% 15%,#672c73 0,transparent 30%),linear-gradient(145deg,#10091d,#1b1030 52%,#0c1021);background-attachment:fixed}
+body[data-theme="ember"]{background:radial-gradient(ellipse at 12% 0%,#753324 0,transparent 36%),radial-gradient(ellipse at 90% 15%,#6b271c 0,transparent 30%),linear-gradient(145deg,#1a0b0b,#28120f 52%,#100d16);background-attachment:fixed}
+body[data-theme="emerald"]{background:radial-gradient(ellipse at 12% 0%,#155a4a 0,transparent 36%),radial-gradient(ellipse at 90% 15%,#1f5b45 0,transparent 30%),linear-gradient(145deg,#061610,#0a211b 52%,#08131b);background-attachment:fixed}
+/* NUMBER LADDER / VIGINTILLION ENDGAME */
+:root{--rank-accent:#ffd34e;--rank-accent-soft:#ffd34e22}
+#rank{border-color:var(--rank-accent);color:var(--rank-accent);box-shadow:0 0 18px var(--rank-accent-soft)}
+#rankUnitBadge{border-color:var(--rank-accent);color:var(--rank-accent);white-space:nowrap}
+.orb{box-shadow:inset -17px -20px 32px #73301466,inset 12px 12px 26px #fffac1cc,0 0 0 10px var(--rank-accent-soft),0 0 58px var(--rank-accent-soft),0 24px 55px #0007}
+.rank-current-card{border-color:var(--rank-accent);background:linear-gradient(115deg,var(--rank-accent-soft),#111e37 58%)}
+.rank-perk{color:var(--rank-accent)!important;font-weight:800;margin-top:7px!important}
+.final-goal-card{border-color:#a78bfa;background:linear-gradient(115deg,#6d4bb322,#111e37 58%)}
+.final-goal-card .progress i{background:linear-gradient(90deg,#8b5cf6,#f0abfc)}
+.rank-atlas-panel{padding:16px;margin-top:16px}
+.rank-atlas-intro{color:var(--muted);font-size:11px;line-height:1.55;margin:7px 0 12px}
+.rank-atlas-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.rank-atlas-item{border:1px solid #2b3d60;border-radius:13px;padding:10px;background:linear-gradient(145deg,#111e37,#0b1427);min-width:0;position:relative;overflow:hidden}
+.rank-atlas-item:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--rank-color,#64748b)}
+.rank-atlas-item.unlocked{border-color:color-mix(in srgb,var(--rank-color,#64748b) 60%,#2b3d60);background:linear-gradient(145deg,color-mix(in srgb,var(--rank-color,#64748b) 13%,#111e37),#0b1427)}
+.rank-atlas-item.current{box-shadow:0 0 0 1px var(--rank-color),0 0 22px color-mix(in srgb,var(--rank-color) 22%,transparent)}
+.rank-atlas-top{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.rank-atlas-icon{font-size:22px;flex:none}
+.rank-atlas-name{font-weight:950;font-size:10px;line-height:1.3;color:#f3f6ff}
+.rank-atlas-value{font-size:10px;color:var(--rank-color);font-weight:900;margin:4px 0}
+.rank-atlas-perk{font-size:10px;color:#aebbd6;line-height:1.45}
+.rank-atlas-status{font-size:9px;color:var(--green);font-weight:900;margin-top:6px}
+.rank-atlas-item.locked{opacity:.58;filter:saturate(.65)}
+.victory-mark{font-size:66px;text-align:center;margin:10px 0;filter:drop-shadow(0 0 20px #b69aff99)}
+.victory-sub{font-size:12px;color:var(--muted);text-align:center;line-height:1.6}
+@media(max-width:540px){.rank-atlas-grid{grid-template-columns:1fr}.rank-atlas-item{padding:12px}.rank-atlas-name{font-size:11px}}
+
+
+/* Her ana kategori için geliştirici bilgisi */
+.creator-footer{
+  margin:18px 0 6px;
+  padding:18px 16px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:linear-gradient(145deg,#141f36ee,#0d1526f5);
+  text-align:center;
+  box-shadow:0 10px 30px #0003;
+}
+.creator-footer-title{
+  color:var(--gold);
+  font-weight:900;
+  font-size:13px;
+  letter-spacing:.5px;
+  margin-bottom:7px;
+}
+.creator-footer p{
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.55;
+  margin:3px 0;
+}
+.creator-footer .creator-name{
+  color:var(--text);
+  font-size:13px;
+  font-weight:800;
+}
+.creator-instagram-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin-top:11px;
+  padding:10px 16px;
+  border-radius:12px;
+  background:linear-gradient(135deg,#ffb34b,#f472b6 58%,#a78bfa);
+  color:#160f20;
+  font-size:12px;
+  font-weight:900;
+  text-decoration:none;
+  box-shadow:0 7px 20px #f472b633;
+  transition:transform .15s ease,filter .15s ease;
+}
+.creator-instagram-link:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.creator-instagram-link:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
+@media(max-width:520px){
+  .creator-footer{padding:15px 12px;margin-top:14px}
+  .creator-instagram-link{width:100%;max-width:280px}
+}
+
+
+/* Scratch-inspired customization studio */
+.customize-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.customize-card{padding:17px;min-width:0}
+.customize-card.full{grid-column:1/-1}
+.customize-card h3{font-size:14px;font-weight:950;margin-bottom:6px}
+.customize-desc{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:12px}
+.object-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.object-choice{min-height:74px;border:1px solid #34496e;border-radius:13px;background:#0b1427;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:8px;transition:.15s}
+.object-choice:hover{border-color:#7895d1;transform:translateY(-2px)}
+.object-choice.selected{border-color:var(--gold);background:linear-gradient(145deg,#51421c,#17233d);box-shadow:0 0 0 1px #ffd34e44}
+.object-choice span{font-size:25px;line-height:1.1}
+.object-choice small{font-size:9px;color:#c4d1ed;font-weight:800;text-align:center}
+.customize-file{display:block;width:100%;padding:10px;border:1px dashed #52658b;border-radius:11px;background:#0b1427;color:#c9d6ef;font-size:11px}
+.customize-select{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0b1224;color:var(--text);font:inherit;font-size:12px}
+.customize-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:9px}
+.customize-row .mini-btn{flex:none}
+.customize-status{font-size:10px;color:var(--muted);margin-top:7px;overflow-wrap:anywhere}
+.customize-range{width:100%;accent-color:#ffd34e}
+.effect-upload-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.effect-upload{background:#0b1427;border:1px solid #2c4065;border-radius:12px;padding:10px;min-width:0}
+.effect-upload strong{display:block;font-size:11px;margin-bottom:7px}
+.effect-upload input{width:100%;font-size:10px;color:var(--muted)}
+.effect-upload .mini-btn{margin-top:8px;width:100%}
+.orb #orbCustomImage{width:75%;height:75%;object-fit:contain;z-index:2;pointer-events:none;filter:drop-shadow(0 5px 9px #0006)}
+.orb.custom-image{background:radial-gradient(circle at 30% 20%,#fff9 0%,#dce8ff 24%,#7086ba 68%,#28365f 100%)}
+.orb.custom-image::after{border-color:#ffffff88}
+#musicStatus{color:var(--green)}
+@media(max-width:700px){.customize-layout{grid-template-columns:1fr}.customize-card.full{grid-column:auto}.object-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.effect-upload-list{grid-template-columns:1fr}}
+@media(max-width:420px){.object-choice{min-height:66px;padding:6px 3px}.object-choice span{font-size:22px}.object-choice small{font-size:8px}}
+
+</style>
+</head>
+<body>
+
+<!-- MODE -->
+<div id="modeOverlay" class="overlay">
+  <div class="brand" style="margin-bottom:6px"><div class="logo">R$</div><div class="brand-text">ROBUX CLICKER<small>X EDITION · SCRATCH-INSPIRED CLICKER • VIGINTILLION ENDGAME</small></div></div>
+  <button class="mode-card" onclick="startLocal()"><strong>📁 Yerel Mod</strong><span>Sadece bu cihaz • İnternet gerekmez</span></button>
+  <button class="mode-card" onclick="showAuth()"><strong>☁️ Bulut Mod</strong><span>Hesap ile giriş • Bulut kayıt ve canlı sıralama</span></button>
+</div>
+
+<!-- AUTH -->
+<div id="authOverlay" class="overlay hidden">
+  <div class="auth-card">
+    <h2 id="authTitle">Bulut Girişi</h2>
+    <input type="email" id="authEmail" placeholder="E-posta" autocomplete="email">
+    <input type="password" id="authPassword" placeholder="Şifre" autocomplete="current-password">
+    <input type="text" id="authUsername" class="hidden" placeholder="Takma ad (herkese açık)">
+    <p style="color:var(--muted);font-size:10px;line-height:1.5;margin:0 0 10px">Gerçek adını kullanma. Takma adın, yalnızca liderlik tablosuna katılmayı açarsan diğer oyunculara görünür.</p>
+    <div class="auth-actions">
+      <button class="btn-gold" id="authBtn" onclick="doAuth()">Giriş Yap</button>
+      <button class="btn-dim" id="authSwitch" type="button" onclick="toggleAuth()">Hesap Oluştur</button>
+    </div>
+    <div class="back-link" id="resetPassLink" onclick="resetPassword()">Şifremi unuttum</div>
+    <div class="auth-err" id="authErr" role="status" aria-live="polite"></div>
+    <div class="back-link" onclick="backMode()">← Geri</div>
+  </div>
+</div>
+
+<div class="app hidden" id="gameApp">
+<header>
+  <div class="brand">
+    <div class="logo">R$</div>
+    <div class="brand-text">ROBUX CLICKER<small>X EDITION · CLICK • POWER UP • EVOLVE</small></div>
+  </div>
+  <div class="header-right">
+    <span class="pill" id="modePill">YEREL</span>
+    <span class="pill gold" id="lvlPill">Lv.1</span>
+    <span class="pill" id="rbPill">0 Rebirth</span>
+    <button class="pill" onclick="manualSave()">💾</button>
+    <button class="pill" onclick="doLogout()">ÇIKIŞ</button>
+  </div>
+</header>
+<div class="offline-banner" id="offlineBanner">
+  <span>💤</span>
+  <div><strong id="offlineText">Çevrimdışı kazanç</strong></div>
+</div>
+<main>
+<!-- CLICK PANEL -->
+<section class="panel-section active" id="sec-click">
+  <div class="hero">
+    <div class="panel click-panel">
+      <div class="eyebrow">TOPLAM ROBUX</div>
+      <div class="balance" id="balance">0 <span>R$</span></div>
+      <div class="rate-row">
+        <div class="rate" id="rate">+1 R$ / tık</div>
+        <div class="rate auto" id="autoRate">+0 R$ / sn</div>
+      </div>
+      <div class="event-strip" id="weeklyEvent">✨ Her cuma tüm kazançlar ×1,5!</div>
+      <div class="powerup-status" id="powerupStatus">🪙 Altın Robux ara sıra ortaya çıkar; yakala ve geçici güç kazan!</div>
+      <div class="orb-wrap" id="orbWrap">
+        <button class="orb" id="orb" aria-label="Robux kazan"><b id="orbLabel">R$</b><img id="orbCustomImage" class="hidden" alt="Seçili tıklama görseli"></button>
+        <button class="golden-robux hidden" id="goldenRobux" aria-label="Altın Robux güçlendirmesini yakala">🪙</button>
+      </div>
+      <div class="orb-hint">Küreye tıkla veya butona bas!</div>
+      <button class="click-btn" id="clickBtn">⚡ ROBUX KAZAN</button>
+    </div>
+    <aside class="panel side">
+      <div class="section-title">📊 İSTATİSTİKLER <span class="pill" id="rank">YENİ OYUNCU</span></div>
+      <div class="stat-grid">
+        <div class="stat"><small>Toplam tıklama</small><strong id="clicks">0</strong></div>
+        <div class="stat"><small>Saniyelik</small><strong id="perSec">0</strong></div>
+        <div class="stat"><small>En yüksek</small><strong id="best">0</strong></div>
+        <div class="stat"><small>Yükseltme</small><strong id="upgrades">0</strong></div>
+        <div class="stat"><small>Toplam kazanılan</small><strong id="totalEarned">0</strong></div>
+        <div class="stat"><small>Pet gücü</small><strong id="petPower">0%</strong></div>
+      </div>
+      <div class="daily">
+        <div class="section-title">🎁 GÜNLÜK GÖREV <span style="font-size:10px;color:#a8c4ff" id="questCount">0 / 50</span></div>
+        <p id="questDesc">50 kez tıkla ve bonus kap!</p>
+        <div class="progress"><i id="questBar"></i></div>
+        <button class="mini-btn" id="questBtn" style="margin-top:8px" disabled>ÖDÜLÜ AL</button>
+      </div>
+      <div class="daily rank-current-card">
+        <div class="section-title">🏆 RÜTBE YOLCULUĞU <span class="pill" id="rankUnitBadge">BAŞLANGIÇ</span></div>
+        <p id="rankText">İlk rütbeni açmak için Robux kazan!</p>
+        <div class="progress"><i id="rankBar"></i></div>
+        <p id="rankPerk" class="rank-perk">Rütbe ödülün burada görünecek.</p>
+      </div>
+      <div class="daily final-goal-card">
+        <div class="section-title">🌌 SON HEDEF <span class="pill" id="finalGoalBadge">1 TRESVİGİNTİLYON</span></div>
+        <p id="finalGoalText">Oyunu bitirmek için kasanda en az 1 Tresvigintilyon R$ tutmalısın.</p>
+        <div class="progress"><i id="finalGoalBar"></i></div>
+      </div>
+      <div class="daily">
+        <div class="section-title">⭐ SEVİYE <span id="xpText" style="font-size:10px;color:#a8c4ff">0 / 100 XP</span></div>
+        <div class="level-bar"><i id="xpBar"></i></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="creator-footer" aria-label="Geliştirici bilgileri">
+    <div class="creator-footer-title">✦ OYUN GELİŞTİRİCİSİ ✦</div>
+    <p>Geliştiren Kişi: <strong class="creator-name">Sarp</strong></p>
+    <p>Resim için alttaki tuşa tıklayın;</p>
+    <a class="creator-instagram-link" href="https://www.instagram.com/p/DW9G0XciP5y/" target="_blank" rel="noopener noreferrer" aria-label="Instagram gönderisini aç">📸 Resim için tıkla</a>
+  </div>
+</section>
+<!-- SHOP -->
+<section class="panel-section" id="sec-shop">
+  <div class="tabs" id="shopTabs">
+    <button class="tab active" data-tab="all">🛒 Tümü</button>
+    <button class="tab" data-tab="click">👆 Tıklama</button>
+    <button class="tab" data-tab="auto">🤖 Otomatik</button>
+    <button class="tab" data-tab="boost">🚀 Güç</button>
+  </div>
+  <div class="shop-head">
+    <div><div class="section-title">YÜKSELTME MAĞAZASI</div><p>Her rütbede yeni yükseltmeler, belirgin güç artışı ve Tresvigintilyon hedefi.</p></div>
+    <span class="pill" id="shopCount">0 yükseltme</span>
+  </div>
+  <section class="shop-grid" id="shop"></section>
+
+  <div class="creator-footer" aria-label="Geliştirici bilgileri">
+    <div class="creator-footer-title">✦ OYUN GELİŞTİRİCİSİ ✦</div>
+    <p>Geliştiren Kişi: <strong class="creator-name">Sarp</strong></p>
+    <p>Resim için alttaki tuşa tıklayın;</p>
+    <a class="creator-instagram-link" href="https://www.instagram.com/p/DW9G0XciP5y/" target="_blank" rel="noopener noreferrer" aria-label="Instagram gönderisini aç">📸 Resim için tıkla</a>
+  </div>
+</section>
+<!-- PETS -->
+<section class="panel-section" id="sec-pets">
+  <div class="panel" style="padding:18px;margin-bottom:14px">
+    <div class="section-title">🥚 <span id="eggTitle">BAŞLANGIÇ YUMURTASI</span></div>
+    <div class="egg-area">
+      <div class="egg" id="egg" title="Yumurtaya tıkla">🥚</div>
+      <p style="color:var(--muted);font-size:12px;margin:8px 0">Fiyat: <strong id="eggCost">500</strong> R$</p>
+      <div class="egg-quantity-panel">
+        <div class="egg-quantity-presets">
+          <button class="mini-btn" type="button" data-egg-count="1">×1</button>
+          <button class="mini-btn" type="button" data-egg-count="10">×10</button>
+          <button class="mini-btn" type="button" data-egg-count="100">×100</button>
+          <button class="mini-btn" type="button" id="eggMaxBtn">MAX</button>
+        </div>
+        <label class="egg-quantity-label" for="eggCountInput">Açılacak yumurta sayısı</label>
+        <input id="eggCountInput" class="egg-quantity-input" type="number" min="1" max="1000" step="1" inputmode="numeric" value="1">
+        <div class="egg-quantity-summary">
+          <span>Seçilen: <strong id="eggSelectedCount">1</strong></span>
+          <span>Toplam: <strong id="eggTotalCost">500</strong> R$</span>
+          <span>Alabileceğin: <strong id="eggAffordableCount">0</strong></span>
+        </div>
+        <button class="click-btn" id="openEggBtn" style="font-size:13px;padding:10px 18px;margin-top:8px">1 Yumurta Aç</button>
+      </div>
+      <p style="color:var(--muted);font-size:10px;margin-top:8px">1, 10, 100 veya istediğin sayıda yumurta aç. Fiyat rütbene göre artar, pet sayına göre artmaz. Tek seferde en fazla 1.000 yumurta açılabilir.</p>
+      <p style="color:var(--muted);font-size:10px;margin-top:4px">Common’dan Tresvigintilyon’a 20 pet nadirliği! Üç aktif petinin gücü birleşir.</p>
+    </div>
+  </div>
+  <div class="panel" id="fuseMachine" style="padding:16px;margin:14px 0;border:1px solid #8b72d8;background:linear-gradient(145deg,#211b3b,#10182d)">
+    <div class="section-title">🧬 FUSE MACHINE <span class="pill" id="fuseSelectedCount">0 / 3</span></div>
+    <p style="color:var(--muted);font-size:11px;line-height:1.5;margin:6px 0 10px">Üç aynı isim ve nadirlikteki peti seç. Birleştirince üçü gider ve daha güçlü, geliştirilmiş bir pet elde edersin. Aktif petler de seçilebilir.</p>
+    <p id="fuseStatus" style="color:var(--muted);font-size:11px;margin:0 0 9px">Koleksiyonundan aynı tür, nadirlik ve geliştirme seviyesinde 3 pet seç.</p>
+    <button class="click-btn" id="fusePetsBtn" disabled style="font-size:12px;padding:10px 18px">🧬 3 AYNI PETİ BİRLEŞTİR</button>
+  </div>
+  <div class="pet-overview panel">
+    <div><div class="section-title">⚡ AKTİF PET TAKIMIN <span class="pill" id="petSlotsLabel">0 / 3</span></div><p>Üç peti aynı anda donat. Güçleri birleşerek tıklama ve otomatik kazancını artırır.</p></div>
+    <div class="equipped-slots" id="equippedSlots"></div>
+  </div>
+  <div class="section-title pet-section-head">🐾 PET KOLEKSİYONUN <span class="pill" id="petCount">0 pet</span></div>
+  <div class="pet-grid" id="petGrid"></div>
+  <p class="pet-help">Pet kartına tıklayarak donatabilir veya takımdan çıkarabilirsin. En fazla 3 aktif pet kullanabilirsin.</p>
+
+  <div class="creator-footer" aria-label="Geliştirici bilgileri">
+    <div class="creator-footer-title">✦ OYUN GELİŞTİRİCİSİ ✦</div>
+    <p>Geliştiren Kişi: <strong class="creator-name">Sarp</strong></p>
+    <p>Resim için alttaki tuşa tıklayın;</p>
+    <a class="creator-instagram-link" href="https://www.instagram.com/p/DW9G0XciP5y/" target="_blank" rel="noopener noreferrer" aria-label="Instagram gönderisini aç">📸 Resim için tıkla</a>
+  </div>
+</section>
+<!-- QUESTS / ACHIEVEMENTS -->
+<section class="panel-section" id="sec-quests">
+  <div class="panel" style="padding:16px;margin-bottom:14px">
+    <div class="section-title">📅 GÜNLÜK ÖDÜL</div>
+    <p style="color:var(--muted);font-size:12px;margin:8px 0" id="dailyDesc">Her gün giriş ödülü al!</p>
+    <button class="mini-btn" id="dailyBtn" style="background:#2d6a4f">Ödülü Al</button>
+  </div>
+  <div class="section-title" style="margin-bottom:10px">🏅 BAŞARIMLAR</div>
+  <div class="ach-grid" id="achGrid"></div>
+  <div class="panel rank-atlas-panel">
+    <div class="section-title">🔢 SAYI VE RÜTBE ATLASI <span class="pill" id="rankAtlasCount">0 / 64</span></div>
+    <p class="rank-atlas-intro">Her yeni rütbe kalıcı ve özel bir yetenek açar. Son basamak 1 Tresvigintilyon R$ değerindedir.</p>
+    <div class="rank-atlas-grid" id="rankAtlas"></div>
+  </div>
+
+  <div class="creator-footer" aria-label="Geliştirici bilgileri">
+    <div class="creator-footer-title">✦ OYUN GELİŞTİRİCİSİ ✦</div>
+    <p>Geliştiren Kişi: <strong class="creator-name">Sarp</strong></p>
+    <p>Resim için alttaki tuşa tıklayın;</p>
+    <a class="creator-instagram-link" href="https://www.instagram.com/p/DW9G0XciP5y/" target="_blank" rel="noopener noreferrer" aria-label="Instagram gönderisini aç">📸 Resim için tıkla</a>
+  </div>
+</section>
+<!-- REBIRTH -->
+<section class="panel-section" id="sec-rebirth">
+  <div class="panel rebirth-box">
+    <div class="section-title" style="justify-content:center">♻️ REBIRTH / PRESTIGE</div>
+    <p style="color:var(--muted);font-size:12px;margin:10px 0;line-height:1.5">Rebirth yaparak tüm Robux ve yükseltmelerini sıfırla, kalıcı çarpan kazan. Petlerin ve başarımların korunur.</p>
+    <div class="big" id="rbMult">×1.00 Çarpan</div>
+    <p style="font-size:12px;margin:6px 0">Sonraki rebirth için gerekli: <strong id="rbNeed">10.000</strong> R$</p>
+    <p style="font-size:11px;color:var(--muted)">Her rebirth kalıcı gelir çarpanını +%5 artırır. Sınır yok!</p>
+    <button class="btn-purple" id="rebirthBtn" style="margin-top:14px" disabled>♻️ REBIRTH YAP</button>
+  </div>
+  <div class="panel" style="padding:16px;margin-top:12px">
+    <div class="section-title">🌐 CANLI LİDERLİK TABLOSU <span class="pill" id="lbLivePill">BAĞLANIYOR</span></div>
+    <p style="color:var(--muted);font-size:11px;margin:6px 0 10px">Bulut modundaki oyuncuların herkese açık takma adları ve oyun skorları. E-posta ve özel profil verileri gösterilmez.</p>
+    <div id="lbStatus" style="font-size:11px;color:var(--muted);margin-bottom:8px">Canlı liste yükleniyor…</div>
+    <ul class="lb-list" id="lbList"></ul>
+  </div>
+
+  <div class="creator-footer" aria-label="Geliştirici bilgileri">
+    <div class="creator-footer-title">✦ OYUN GELİŞTİRİCİSİ ✦</div>
+    <p>Geliştiren Kişi: <strong class="creator-name">Sarp</strong></p>
+    <p>Resim için alttaki tuşa tıklayın;</p>
+    <a class="creator-instagram-link" href="https://www.instagram.com/p/DW9G0XciP5y/" target="_blank" rel="noopener noreferrer" aria-label="Instagram gönderisini aç">📸 Resim için tıkla</a>
+  </div>
+</section>
+<!-- SETTINGS / STATS -->
+<section class="panel-section" id="sec-settings">
+  <div class="panel info" style="margin-bottom:12px">
+    <div class="section-title">⚙️ AYARLAR</div>
+    <div class="settings-row"><span>Ses efektleri</span><div class="toggle on" id="togSound"></div></div>
+    <div class="settings-row"><span>Parçacık efektleri</span><div class="toggle on" id="togParticles"></div></div>
+    <div class="settings-row"><span>Kritik tıklama animasyonu</span><div class="toggle on" id="togCrit"></div></div>
+    <div class="settings-row"><span>Otomatik kayıt</span><div class="toggle on" id="togSave"></div></div>
+    <div class="settings-row"><span>Canlı liderlik tablosunda görün</span><div class="toggle" id="togLeaderboard"></div></div>
+    <div class="settings-row"><label for="themeSelect">Oyun görünümü</label><select id="themeSelect" class="theme-select"><option value="midnight">Gece mavisi</option><option value="ocean">Okyanus</option><option value="nebula">Nebula</option><option value="ember">Alev</option><option value="emerald">Zümrüt</option></select></div>
+    <p style="color:var(--muted);font-size:10px;line-height:1.5;margin-top:8px">Kapattığında herkese açık skor kaydın silinir. Takma adın ve skorun dışında e-posta veya şifre liderlik tablosuna gönderilmez.</p>
+  </div>
+  <div class="panel info profile-card" style="margin-bottom:12px">
+    <div class="section-title">👤 PROFİLİN <span class="pill" id="profileMode">YEREL</span></div>
+    <p>Oyunda görünecek takma adını düzenle. E-posta adresin diğer oyunculara gösterilmez.</p>
+    <div class="profile-edit-row"><input id="profileNameInput" maxlength="18" placeholder="Oyuncu adı" autocomplete="nickname"><button class="mini-btn" id="saveProfileBtn">Kaydet</button></div>
+  </div>
+  <div class="panel info" style="margin-bottom:12px">
+    <div class="section-title">💾 KAYIT</div>
+    <p>İlerlemen otomatik kaydedilir. Bulut hesabında oyun verileri sunucuda doğrulanır; yedek kodu içe aktarma kapalıdır.</p>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn-red" id="resetBtn">↻ Sıfırla</button>
+    </div>
+  </div>
+  <div class="panel info">
+    <div class="section-title">ℹ️ HAKKINDA</div>
+    <p>Bu bir fan-made Robux tıklama simülatörüdür. Gerçek Roblox hesabına Robux göndermez. Tüm değerler oyun içidir. İyi eğlenceler!</p>
+  </div>
+
+  <div class="creator-footer" aria-label="Geliştirici bilgileri">
+    <div class="creator-footer-title">✦ OYUN GELİŞTİRİCİSİ ✦</div>
+    <p>Geliştiren Kişi: <strong class="creator-name">Sarp</strong></p>
+    <p>Resim için alttaki tuşa tıklayın;</p>
+    <a class="creator-instagram-link" href="https://www.instagram.com/p/DW9G0XciP5y/" target="_blank" rel="noopener noreferrer" aria-label="Instagram gönderisini aç">📸 Resim için tıkla</a>
+  </div>
+</section>
+<!-- CUSTOMIZATION STUDIO -->
+<section class="panel-section" id="sec-customize">
+  <div class="panel info" style="margin-bottom:12px">
+    <div class="section-title">🎨 ÖZELLEŞTİRME STÜDYOSU <span class="pill">SCRATCH TARZI</span></div>
+    <p>Oyunun görünüşünü ve seslerini kendine göre ayarla. Seçimlerin bu tarayıcıda saklanır; oyun ilerlemeni değiştirmez.</p>
+  </div>
+  <div class="customize-layout">
+    <div class="panel customize-card full">
+      <h3>👆 Tıklanacak nesne</h3>
+      <p class="customize-desc">Robux küresinin yerine istediğin simgeyi seç. Kendi görselini de yükleyebilirsin.</p>
+      <div class="object-grid" id="objectChoices">
+        <button class="object-choice selected" data-object="robux"><span>R$</span><small>Robux</small></button>
+        <button class="object-choice" data-object="coin"><span>🪙</span><small>Altın</small></button>
+        <button class="object-choice" data-object="diamond"><span>💎</span><small>Elmas</small></button>
+        <button class="object-choice" data-object="star"><span>⭐</span><small>Yıldız</small></button>
+        <button class="object-choice" data-object="gem"><span>🔮</span><small>Kristal</small></button>
+        <button class="object-choice" data-object="paw"><span>🐾</span><small>Pati</small></button>
+        <button class="object-choice" data-object="fire"><span>🔥</span><small>Alev</small></button>
+        <button class="object-choice" data-object="ice"><span>🧊</span><small>Buz</small></button>
+        <button class="object-choice" data-object="crown"><span>👑</span><small>Taç</small></button>
+        <button class="object-choice" data-object="rocket"><span>🚀</span><small>Roket</small></button>
+        <button class="object-choice" data-object="heart"><span>💖</span><small>Kalp</small></button>
+        <button class="object-choice" data-object="cookie"><span>🍪</span><small>Kurabiye</small></button>
+        <button class="object-choice" data-object="planet"><span>🪐</span><small>Gezegen</small></button>
+        <button class="object-choice" data-object="trophy"><span>🏆</span><small>Kupa</small></button>
+        <button class="object-choice" data-object="gift"><span>🎁</span><small>Hediye</small></button>
+      </div>
+      <div class="customize-row" style="margin-top:13px">
+        <input class="customize-file" id="clickImageUpload" type="file" accept="image/*">
+        <button class="mini-btn" id="clearClickImage" type="button">Yüklenen görseli kaldır</button>
+      </div>
+      <div class="customize-status" id="clickImageStatus">Hazır simgelerden birini seçebilir veya PNG/JPG/WebP görseli yükleyebilirsin.</div>
+    </div>
+    <div class="panel customize-card">
+      <h3>🎵 Oyun müziği</h3>
+      <p class="customize-desc">Üç özgün, oyun içinde üretilen müzikten birini seç veya kendi ses dosyanı kullan.</p>
+      <select id="musicTrackSelect" class="customize-select">
+        <option value="arcade">🕹️ 8-bit Arcade</option>
+        <option value="space">🌌 Uzay Yolculuğu</option>
+        <option value="happy">🎉 Neşeli Macera</option>
+        <option value="custom">📁 Kendi müziğim</option>
+        <option value="off">🔇 Müzik kapalı</option>
+      </select>
+      <div class="customize-row">
+        <button class="mini-btn" id="musicToggle" type="button">⏸ Müziği duraklat</button>
+        <span class="customize-status" id="musicStatus">Müzik hazır</span>
+      </div>
+      <label for="musicVolume" style="display:block;font-size:11px;margin-top:13px">Müzik seviyesi</label>
+      <input id="musicVolume" class="customize-range" type="range" min="0" max="100" value="28">
+      <div class="customize-row" style="margin-top:12px">
+        <input class="customize-file" id="musicUpload" type="file" accept="audio/*">
+      </div>
+      <div class="customize-status" id="musicFileStatus">MP3, WAV, OGG veya tarayıcının desteklediği bir ses dosyası seç.</div>
+    </div>
+    <div class="panel customize-card">
+      <h3>🔊 Ses efektleri</h3>
+      <p class="customize-desc">Tıklama, satın alma ve seviye atlama seslerini birbirinden bağımsız değiştirebilirsin. Dosya seçmezsen oyunun özgün sesleri kullanılır.</p>
+      <div class="effect-upload-list">
+        <div class="effect-upload"><strong>👆 Tıklama sesi</strong><input id="effectClickUpload" type="file" accept="audio/*"><button class="mini-btn" data-clear-effect="click" type="button">Varsayılana dön</button></div>
+        <div class="effect-upload"><strong>🛒 Satın alma sesi</strong><input id="effectBuyUpload" type="file" accept="audio/*"><button class="mini-btn" data-clear-effect="buy" type="button">Varsayılana dön</button></div>
+        <div class="effect-upload"><strong>⭐ Seviye sesi</strong><input id="effectLevelUpload" type="file" accept="audio/*"><button class="mini-btn" data-clear-effect="level" type="button">Varsayılana dön</button></div>
+      </div>
+      <label for="effectVolume" style="display:block;font-size:11px;margin-top:13px">Ses efekti seviyesi</label>
+      <input id="effectVolume" class="customize-range" type="range" min="0" max="100" value="70">
+      <div class="customize-status" id="effectStatus">Ses dosyaları bu cihazda saklanır.</div>
+    </div>
+  </div>
+
+  <div class="creator-footer" aria-label="Geliştirici bilgileri">
+    <div class="creator-footer-title">✦ OYUN GELİŞTİRİCİSİ ✦</div>
+    <p>Geliştiren Kişi: <strong class="creator-name">Sarp</strong></p>
+    <p>Resim için alttaki tuşa tıklayın;</p>
+    <a class="creator-instagram-link" href="https://www.instagram.com/p/DW9G0XciP5y/" target="_blank" rel="noopener noreferrer" aria-label="Instagram gönderisini aç">📸 Resim için tıkla</a>
+  </div>
+</section>
+
+</main>
+<footer>ROBUX CLICKER X · 73 RANKS · TRESVIGINTILLION ENDGAME · FAN-MADE · NOT AFFILIATED WITH ROBLOX CORPORATION · E-posta/şifre liderlik tablosunda yayınlanmaz.</footer>
+</div>
+<nav class="nav-bottom" id="bottomNav">
+  <button class="nav-btn active" data-sec="click"><span>👆</span>Tıkla</button>
+  <button class="nav-btn" data-sec="shop"><span>🛒</span>Mağaza</button>
+  <button class="nav-btn" data-sec="pets"><span>🐾</span>Petler</button>
+  <button class="nav-btn" data-sec="quests"><span>🏅</span>Görev</button>
+  <button class="nav-btn" data-sec="rebirth"><span>♻️</span>Rebirth</button>
+  <button class="nav-btn" data-sec="customize"><span>🎨</span>Özelleştir</button>
+  <button class="nav-btn" data-sec="settings"><span>⚙️</span>Ayar</button>
+</nav>
+<div class="toast" id="toast"></div>
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <span class="modal-close" id="modalClose">×</span>
+    <div id="modalBody"></div>
+  </div>
+</div>
+<script>
+/* ===== Firebase ===== */
+const firebaseConfig={apiKey:"AIzaSyAtS69M-l2xAs0U_RB4f-9R1Tmfcsx6gw0",authDomain:"roblox-clicker07.firebaseapp.com",projectId:"roblox-clicker07",storageBucket:"roblox-clicker07.firebasestorage.app",messagingSenderId:"397068256021",appId:"1:397068256021:web:e7625e505b9fcc057a9f1c",measurementId:"G-Q9D0MHGWMP"};
+const SUPABASE_URL='https://pfzyxueduypesaqfwnrf.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_YzFzEqQC4BcKxguiauq2zQ_ULHBT42V';
+const SUPABASE_GAME_API=SUPABASE_URL+'/functions/v1/game-api';
+let auth=null, firebaseReady=false;
+if(window.firebase && typeof firebase.auth==='function'){
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    auth=firebase.auth();firebaseReady=true;
+  }catch(err){console.warn('Firebase Auth unavailable; local mode remains available.',err);}
+}
+let mode=null, currentUser=null, authMode='login', leaderboardUnsub=null;
+let authBusy=false, leaderboardData=[], cloudSaveTimer=null, cloudWriteBusy=false, localSaveTimer=null;
+let cloudClickPending=0, cloudClickBusy=false, cloudClickTimer=null, lastCloudTick=0;
+
+const $ = id => document.getElementById(id);
+const $$ = sel => document.querySelectorAll(sel);
+// ========== DATA ==========
+const ITEMS = [
+  {id:'cursor',name:'Altın İmleç',icon:'🖱️',desc:'Tıklama başına +1 Robux',cost:25,type:'click',power:1,tab:'click'},
+  {id:'mouse',name:'Pro Oyuncu Mouse',icon:'🎮',desc:'Tıklama başına +7 Robux',cost:150,type:'click',power:7,tab:'click'},
+  {id:'keyboard',name:'RGB Klavye',icon:'⌨️',desc:'Tıklama başına +28 Robux',cost:750,type:'click',power:28,tab:'click'},
+  {id:'headset',name:'Gaming Headset',icon:'🎧',desc:'Tıklama başına +70 Robux',cost:3200,type:'click',power:70,tab:'click'},
+  {id:'pc',name:'Oyuncu PC',icon:'💻',desc:'Tıklama başına +190 Robux',cost:14000,type:'click',power:190,tab:'click'},
+  {id:'studio',name:'Roblox Studio',icon:'🛠️',desc:'Tıklama başına +620 Robux',cost:65000,type:'click',power:620,tab:'click'},
+  {id:'titanmouse',name:'Titan Mouse',icon:'🦾',desc:'Tıklama başına +2.700 Robux',cost:280000,type:'click',power:2700,tab:'click'},
+  {id:'quantumglove',name:'Kuantum Eldiven',icon:'🧤',desc:'Tıklama başına +12.000 Robux',cost:1500000,type:'click',power:12000,tab:'click'},
+  {id:'cosmickeyboard',name:'Kozmik Klavye',icon:'🌠',desc:'Tıklama başına +58.000 Robux',cost:8500000,type:'click',power:58000,tab:'click'},
+  {id:'infinitycursor',name:'Sonsuzluk İmleci',icon:'♾️',desc:'Tıklama başına +280.000 Robux',cost:50000000,type:'click',power:280000,tab:'click'},
+  {id:'bot',name:'Mini Bot',icon:'🤖',desc:'Saniyede +1 Robux',cost:60,type:'auto',power:1,tab:'auto'},
+  {id:'farm',name:'Robux Çiftliği',icon:'🏭',desc:'Saniyede +9 Robux',cost:450,type:'auto',power:9,tab:'auto'},
+  {id:'server',name:'Mega Sunucu',icon:'🛰️',desc:'Saniyede +44 Robux',cost:2800,type:'auto',power:44,tab:'auto'},
+  {id:'cloud',name:'Bulut Farm',icon:'☁️',desc:'Saniyede +145 Robux',cost:15000,type:'auto',power:145,tab:'auto'},
+  {id:'quantum',name:'Kuantum Miner',icon:'⚛️',desc:'Saniyede +560 Robux',cost:85000,type:'auto',power:560,tab:'auto'},
+  {id:'neural',name:'Nöral Ağ',icon:'🧠',desc:'Saniyede +2.700 Robux',cost:450000,type:'auto',power:2700,tab:'auto'},
+  {id:'orbital',name:'Yörünge İstasyonu',icon:'🪐',desc:'Saniyede +13.500 Robux',cost:2800000,type:'auto',power:13500,tab:'auto'},
+  {id:'dyson',name:'Dyson Küresi',icon:'☀️',desc:'Saniyede +68.000 Robux',cost:18000000,type:'auto',power:68000,tab:'auto'},
+  {id:'galaxycore',name:'Galaksi Çekirdeği',icon:'🌌',desc:'Saniyede +350.000 Robux',cost:120000000,type:'auto',power:350000,tab:'auto'},
+  {id:'mult2',name:'Başlangıç Güç Çekirdeği',icon:'✨',desc:'Tüm kazançlarını ×1,04 artırır',cost:5000,type:'multi',power:1.04,tab:'boost'},
+  {id:'mult3',name:'Gelişmiş Güç Çekirdeği',icon:'💎',desc:'Tüm kazançlarını ×1,06 artırır',cost:35000,type:'multi',power:1.06,tab:'boost'},
+  {id:'mult5',name:'Usta Güç Çekirdeği',icon:'🌟',desc:'Tüm kazançlarını ×1,08 artırır',cost:250000,type:'multi',power:1.08,tab:'boost'},
+  {id:'crit',name:'Kritik Şansı',icon:'💥',desc:'Kritik vuruş şansını %1,5 artırır (en fazla %12)',cost:2200,type:'crit',power:0.015,tab:'boost'},
+  {id:'lucky',name:'Şanslı Tık',icon:'🍀',desc:'Her tıklamada +%3–11 ek kazanç',cost:900,type:'lucky',power:1,tab:'boost'},
+  {id:'offline',name:'Çevrimdışı Boost',icon:'💤',desc:'Çevrimdışı kazancını %50 artırır',cost:4000,type:'offline',power:0.5,tab:'boost'}
+];
+
+// 75 yeni seviye yükseltmesi: 30 tıklama + 30 otomatik + 15 çarpan.
+// Her yeni rütbede 2 güçlü ana yükseltme; çift rütbelerde ek çarpan açılır.
+// Scratch'teki hızlı ve tatmin edici shop döngüsü korunur; tamamlama hedefi aktif oyunda yaklaşık 40-120 dakikadır.
+const UPGRADE_TIER_NAMES = [
+  'Bakır','Bronz','Gümüş','Altın','Platin','Kristal','Elmas','Safir','Yakut','Zümrüt',
+  'Usta','Efsane','Kahraman','Kozmik','Nebula','Galaksi','Yıldız','Kuantum','Astral','Boyutsal',
+  'Kadim','İlahi','Ebedi','Sonsuz','Mutlak','Omega','Nova','Yaratılış','Evren','Nonilyon'
+];
+const HIGH_NUMBER_UNIT_NAMES = [
+  {exp:30,name:'Nonilyon'},{exp:33,name:'Decilyon'},{exp:36,name:'Undecilyon'},
+  {exp:39,name:'Duodecilyon'},{exp:42,name:'Tredecilyon'},{exp:45,name:'Quattuordecilyon'},
+  {exp:48,name:'Quindecilyon'},{exp:51,name:'Sexdecilyon'},{exp:54,name:'Septendecilyon'},
+  {exp:57,name:'Octodecilyon'},{exp:60,name:'Novemdecilyon'},{exp:63,name:'Vigintilyon'},
+  {exp:66,name:'Unvigintilyon'},{exp:69,name:'Duovigintilyon'},{exp:72,name:'Tresvigintilyon'}
+];
+const UPGRADE_TIER_COUNT = 72;
+while(UPGRADE_TIER_NAMES.length<UPGRADE_TIER_COUNT){
+  const tier=UPGRADE_TIER_NAMES.length+1;
+  const unitExp=Math.floor(tier/3)*3;
+  const unit=HIGH_NUMBER_UNIT_NAMES.find(item=>item.exp===unitExp)?.name||'Tresvigintilyon';
+  UPGRADE_TIER_NAMES.push(tier%3===1?`On ${unit}`:(tier%3===2?`Yüz ${unit}`:unit));
+}
+const UPGRADE_ICONS = ['🧲','⚙️','🔋','💠','🪄','🧬','🌟','🌀','💫','🔮','🛸','☄️','🌌','⚡','👑'];
+for(let tier=1;tier<=UPGRADE_TIER_COUNT;tier++){
+  const index=tier-1;
+  // scale, bu rütbenin hedef değerinin onda biridir (10^(tier-1)).
+  // Bu oranlar, önceki sürümdeki aşırı yüksek +%17-20 gelir sıçramalarını engeller.
+  const scale=Math.pow(10,index);
+  const label=UPGRADE_TIER_NAMES[index];
+  const icon=UPGRADE_ICONS[index%UPGRADE_ICONS.length];
+  const clickPowerGain=Math.max(1,Math.round(scale*0.07));
+  const autoPowerGain=Math.max(0.2,scale*0.02);
+  ITEMS.push({
+    id:`rank-click-${String(tier).padStart(2,'0')}`,
+    name:`${label} Tıklama Çekirdeği`,icon,
+    desc:`Her tıklamaya +${clickPowerGain.toLocaleString('tr-TR')} R$ temel güç ekler.`,
+    cost:Math.max(4,scale*4.0),type:'click',power:clickPowerGain,tab:'click',unlockRank:tier
+  });
+  ITEMS.push({
+    id:`rank-auto-${String(tier).padStart(2,'0')}`,
+    name:`${label} Otomasyon Tesisi`,icon:['🤖','🏭','🛰️','☀️','⚛️'][index%5],
+    desc:`Saniyede +${autoPowerGain.toLocaleString('tr-TR',{maximumFractionDigits:2})} R$ otomatik kazanç sağlar.`,
+    cost:Math.max(4,scale*4.4),type:'auto',power:autoPowerGain,tab:'auto',unlockRank:tier
+  });
+}
+for(let step=1;step<=Math.floor(UPGRADE_TIER_COUNT/2);step++){
+  const tier=step*2;
+  const scale=Math.pow(10,tier-1);
+  const factor=1.03+step*0.0015;
+  ITEMS.push({
+    id:`rank-mult-${String(step).padStart(2,'0')}`,
+    name:`${UPGRADE_TIER_NAMES[tier-1]} Evrensel Çarpan`,
+    icon:['✨','💎','🌠','🔱','♾️'][step%5],
+    desc:`Tıklama ve otomatik kazancı kalıcı olarak ×${factor.toFixed(4)} artırır.`,
+    cost:Math.max(5,scale*4.3),type:'multi',power:factor,tab:'boost',unlockRank:tier
+  });
+}
+if(ITEMS.length<100) console.warn('Yükseltme kataloğu beklenenden kısa; mevcut:',ITEMS.length);
+const PET_POOL = [
+  {name:'Pofuduk Kedi',icon:'🐱',rarity:'common',min:5,max:12},
+  {name:'Minik Köpek',icon:'🐶',rarity:'common',min:6,max:13},
+  {name:'Zıpzıp Tavşan',icon:'🐰',rarity:'common',min:7,max:14},
+  {name:'Minik Kaplumbağa',icon:'🐢',rarity:'common',min:5,max:15},
+  {name:'Turuncu Tilki',icon:'🦊',rarity:'common',min:8,max:16},
+  {name:'Uykucu Panda',icon:'🐼',rarity:'common',min:9,max:17},
+  {name:'Buz Tilkisi',icon:'🦊',rarity:'uncommon',min:14,max:26},
+  {name:'Minik Penguen',icon:'🐧',rarity:'uncommon',min:16,max:28},
+  {name:'Uzay Baykuşu',icon:'🦉',rarity:'uncommon',min:18,max:30},
+  {name:'Kristal Geyik',icon:'🦌',rarity:'uncommon',min:20,max:32},
+  {name:'Bal Arısı',icon:'🐝',rarity:'uncommon',min:15,max:29},
+  {name:'Deniz Samuru',icon:'🦦',rarity:'uncommon',min:19,max:34},
+  {name:'Alev Ejderhası',icon:'🐉',rarity:'rare',min:28,max:52},
+  {name:'Anka Kuşu',icon:'🔥',rarity:'rare',min:32,max:58},
+  {name:'Gölge Kurt',icon:'🐺',rarity:'rare',min:35,max:62},
+  {name:'Şimşek Panteri',icon:'🐆',rarity:'rare',min:38,max:68},
+  {name:'Buz Golemi',icon:'🧊',rarity:'rare',min:40,max:72},
+  {name:'Zümrüt Yılan',icon:'🐍',rarity:'rare',min:42,max:75},
+  {name:'Gökkuşağı Tekboynuzu',icon:'🦄',rarity:'epic',min:60,max:105},
+  {name:'Galaksi Kedisi',icon:'🌌',rarity:'epic',min:68,max:115},
+  {name:'Deniz Ejderi',icon:'🐲',rarity:'epic',min:72,max:125},
+  {name:'Ay Muhafızı',icon:'🌙',rarity:'epic',min:78,max:135},
+  {name:'Güneş Aslanı',icon:'🦁',rarity:'epic',min:82,max:145},
+  {name:'Kristal Anka',icon:'💠',rarity:'epic',min:90,max:155},
+  {name:'Altın Ejderha',icon:'🐉',rarity:'legendary',min:120,max:200},
+  {name:'Kızıl Anka',icon:'🪽',rarity:'legendary',min:135,max:220},
+  {name:'Gök Gürültüsü',icon:'🌩️',rarity:'legendary',min:145,max:240},
+  {name:'Kraliyet Griffin',icon:'🦅',rarity:'legendary',min:155,max:260},
+  {name:'Elmas Golem',icon:'💎',rarity:'legendary',min:165,max:280},
+  {name:'Ametist Ejder',icon:'🔮',rarity:'legendary',min:175,max:300},
+  {name:'Mitik Robux Kralı',icon:'👑',rarity:'mythic',min:220,max:380},
+  {name:'Kozmik Leviathan',icon:'🐋',rarity:'mythic',min:250,max:420},
+  {name:'Zaman Bekçisi',icon:'⌛',rarity:'mythic',min:280,max:460},
+  {name:'Evren Kaşifi',icon:'🪐',rarity:'mythic',min:300,max:500},
+  {name:'Sonsuzluk Anka',icon:'♾️',rarity:'mythic',min:330,max:550},
+  {name:'Gizli Gölge',icon:'🥷',rarity:'secret',min:420,max:720},
+  {name:'Boşluk Canavarı',icon:'🌑',rarity:'secret',min:480,max:800},
+  {name:'Hayalet Ejder',icon:'👻',rarity:'secret',min:520,max:880},
+  {name:'Karanlık Prens',icon:'🖤',rarity:'secret',min:600,max:950},
+  {name:'Göksel Koruyucu',icon:'😇',rarity:'celestial',min:900,max:1450},
+  {name:'Kutup Yıldızı',icon:'🌟',rarity:'celestial',min:1000,max:1600},
+  {name:'Yaratılış Tanrısı',icon:'🌞',rarity:'celestial',min:1150,max:1800},
+  {name:'Işık İmparatoru',icon:'✨',rarity:'divine',unlockRank:15,min:1800,max:2800},
+  {name:'Kader Dokuyucu',icon:'🧵',rarity:'divine',unlockRank:15,min:2100,max:3200},
+  {name:'Altın Kozmos',icon:'🌠',rarity:'divine',unlockRank:15,min:2400,max:3600},
+  {name:'Ebediyet Ejderi',icon:'🐉',rarity:'eternal',unlockRank:18,min:3200,max:5200},
+  {name:'Zamanın Kalbi',icon:'⏳',rarity:'eternal',unlockRank:18,min:3800,max:6000},
+  {name:'Sonsuz Muhafız',icon:'🛡️',rarity:'eternal',unlockRank:18,min:4200,max:6800},
+  {name:'Sonsuzluk Tilkisi',icon:'🦊',rarity:'infinite',unlockRank:24,min:6500,max:10500},
+  {name:'Boyutlar Arası',icon:'🌀',rarity:'infinite',unlockRank:24,min:7800,max:12500},
+  {name:'Mutlak Yıldız',icon:'🌌',rarity:'infinite',unlockRank:24,min:9000,max:14500},
+  {name:'Nonilyon Anka',icon:'🔥',rarity:'nonillion',unlockRank:30,min:16000,max:26000},
+  {name:'Son Rütbenin Ejderi',icon:'🐲',rarity:'nonillion',unlockRank:30,min:20000,max:32000},
+  {name:'Mutlak Robux Tanrısı',icon:'👑',rarity:'nonillion',unlockRank:30,min:25000,max:40000},
+  {name:'Vigintilyon Yıldız Ejderi',icon:'🐉',rarity:'vigintillion',unlockRank:33,min:52000,max:85000},
+  {name:'Kozmik Taht Muhafızı',icon:'🛡️',rarity:'vigintillion',unlockRank:33,min:65000,max:105000},
+  {name:'Unvigintilyon Anka',icon:'🔥',rarity:'unvigintillion',unlockRank:36,min:110000,max:180000},
+  {name:'Sonsuzluk İmparatoru',icon:'👑',rarity:'unvigintillion',unlockRank:36,min:140000,max:220000},
+  {name:'Duovigintilyon Leviathan',icon:'🐋',rarity:'duovigintillion',unlockRank:42,min:260000,max:420000},
+  {name:'Boyutların Kalbi',icon:'💠',rarity:'duovigintillion',unlockRank:42,min:320000,max:520000},
+  {name:'Tresvigintilyon Tanrısı',icon:'🌌',rarity:'tresvigintillion',unlockRank:48,min:600000,max:950000},
+  {name:'Mutlak Yaratıcı',icon:'✨',rarity:'tresvigintillion',unlockRank:48,min:750000,max:1200000},
+  {name:'Kuantum Sonsuzluk Ejderi',icon:'🐲',rarity:'quattuorvigintillion',unlockRank:54,min:1500000,max:2400000},
+  {name:'Zamanın Ötesi',icon:'⌛',rarity:'quattuorvigintillion',unlockRank:54,min:1900000,max:3000000},
+  {name:'Quinvigintilyon Koruyucusu',icon:'🪽',rarity:'quinvigintillion',unlockRank:60,min:3500000,max:5600000},
+  {name:'Mutlak Kozmos',icon:'🌠',rarity:'quinvigintillion',unlockRank:60,min:4500000,max:7200000},
+  {name:'Sexvigintilyon Hükümdarı',icon:'👑',rarity:'sexvigintillion',unlockRank:66,min:8500000,max:14000000},
+  {name:'Yaratılışın Son Anahtarı',icon:'🗝️',rarity:'sexvigintillion',unlockRank:66,min:11000000,max:18000000},
+  {name:'Tresvigintilyon Başlangıcı',icon:'🌌',rarity:'septemvigintillion',unlockRank:72,min:22000000,max:36000000},
+  {name:'Son Evren Anka',icon:'🔥',rarity:'septemvigintillion',unlockRank:72,min:30000000,max:50000000}
+];
+const RARITY_CHANCE = [
+  {r:'common',w:34},{r:'uncommon',w:25},{r:'rare',w:18},{r:'epic',w:12},
+  {r:'legendary',w:7},{r:'mythic',w:2.5},{r:'secret',w:0.9},{r:'celestial',w:0.3},
+  {r:'divine',w:0.18},{r:'eternal',w:0.09},{r:'infinite',w:0.045},{r:'nonillion',w:0.015},
+  {r:'vigintillion',w:0.009},{r:'unvigintillion',w:0.006},{r:'duovigintillion',w:0.003},{r:'tresvigintillion',w:0.001},{r:'quattuorvigintillion',w:0.0008},{r:'quinvigintillion',w:0.0006},{r:'sexvigintillion',w:0.0004},{r:'septemvigintillion',w:0.0002}
+];
+const ACHIEVEMENTS = [
+  {id:'c100',name:'İlk Adımlar',desc:'100 tıklama yap',check:s=>s.clicks>=100,reward:150},
+  {id:'c1k',name:'Tıklama Ustası',desc:'1.000 tıklama',check:s=>s.clicks>=1000,reward:800},
+  {id:'c10k',name:'Parmak Kırıcı',desc:'10.000 tıklama',check:s=>s.clicks>=10000,reward:5000},
+  {id:'m10k',name:'Zengin',desc:'10.000 R$ biriktir',check:s=>s.best>=10000,reward:1200},
+  {id:'m100k',name:'Milyoner Adayı',desc:'100.000 R$ biriktir',check:s=>s.best>=100000,reward:8000},
+  {id:'m1m',name:'Robux Baronu',desc:'1.000.000 R$ biriktir',check:s=>s.best>=1000000,reward:50000},
+  {id:'u10',name:'Koleksiyoncu',desc:'10 yükseltme al',check:s=>Object.values(s.owned).reduce((a,b)=>a+b,0)>=10,reward:600},
+  {id:'u50',name:'Mağaza Kralı',desc:'50 yükseltme al',check:s=>Object.values(s.owned).reduce((a,b)=>a+b,0)>=50,reward:8000},
+  {id:'p5',name:'Pet Sever',desc:'5 pet topla',check:s=>s.pets.length>=5,reward:1000},
+  {id:'p20',name:'Pet Ustası',desc:'20 pet topla',check:s=>s.pets.length>=20,reward:12000},
+  {id:'p40',name:'Efsane Koleksiyoncu',desc:'40 pet topla',check:s=>s.pets.length>=40,reward:75000},
+  {id:'rb1',name:'Yeniden Doğuş',desc:'1 rebirth yap',check:s=>s.rebirths>=1,reward:5000},
+  {id:'rb5',name:'Prestige Lord',desc:'5 rebirth yap',check:s=>s.rebirths>=5,reward:50000},
+  {id:'lv10',name:'Seviye 10',desc:'Seviye 10 ol',check:s=>s.level>=10,reward:3000},
+  {id:'lv25',name:'Seviye 25',desc:'Seviye 25 ol',check:s=>s.level>=25,reward:25000}
+];
+// Her 10 katlık basamak ayrı rütbe açar; son hedef 1 Tresvigintilyon (10^63).
+const NUMBER_UNITS = [
+  {exp:3,name:'Bin',suffix:'Bin'},
+  {exp:6,name:'Milyon',suffix:'Milyon'},
+  {exp:9,name:'Milyar',suffix:'Milyar'},
+  {exp:12,name:'Trilyon',suffix:'Trilyon'},
+  {exp:15,name:'Katrilyon',suffix:'Katrilyon'},
+  {exp:18,name:'Kentilyon',suffix:'Kentilyon'},
+  {exp:21,name:'Sekstilyon',suffix:'Sekstilyon'},
+  {exp:24,name:'Septilyon',suffix:'Septilyon'},
+  {exp:27,name:'Oktilyon',suffix:'Oktilyon'},
+  {exp:30,name:'Nonilyon',suffix:'Nonilyon'},
+  {exp:33,name:'Decilyon',suffix:'Decilyon'},
+  {exp:36,name:'Undecilyon',suffix:'Undecilyon'},
+  {exp:39,name:'Duodecilyon',suffix:'Duodecilyon'},
+  {exp:42,name:'Tredecilyon',suffix:'Tredecilyon'},
+  {exp:45,name:'Quattuordecilyon',suffix:'Quattuordecilyon'},
+  {exp:48,name:'Quindecilyon',suffix:'Quindecilyon'},
+  {exp:51,name:'Sexdecilyon',suffix:'Sexdecilyon'},
+  {exp:54,name:'Septendecilyon',suffix:'Septendecilyon'},
+  {exp:57,name:'Octodecilyon',suffix:'Octodecilyon'},
+  {exp:60,name:'Novemdecilyon',suffix:'Novemdecilyon'},
+  {exp:63,name:'Vigintilyon',suffix:'Vigintilyon'},
+  {exp:66,name:'Unvigintilyon',suffix:'Unvigintilyon'},
+  {exp:69,name:'Duovigintilyon',suffix:'Duovigintilyon'},
+  {exp:72,name:'Tresvigintilyon',suffix:'Tresvigintilyon'}
+];
+const RANK_NAMES = [
+  'YENİ OYUNCU','ONLUK ÇAYLAK','YÜZLÜK TOPLAYICI','BİNLİK USTASI','ON BİNLİK KAŞİFİ',
+  'YÜZ BİNLİK KOLEKSİYONCU','MİLYONER','ON MİLYON EFSANESİ','YÜZ MİLYON ŞAMPİYONU',
+  'MİLYARDER','ON MİLYAR FATİHİ','YÜZ MİLYAR HÜKÜMDARI','TRİLYONER','ON TRİLYON USTASI',
+  'YÜZ TRİLYON LORDU','KATRİLYONER','ON KATRİLYON EFENDİSİ','YÜZ KATRİLYON KRALI',
+  'KENTİLYONER','ON KENTİLYON HÜKÜMDARI','YÜZ KENTİLYON FATİHİ','SEKSTİLYONER',
+  'ON SEKSTİLYON TANRISI','YÜZ SEKSTİLYON EFSANESİ','SEPTİLYONER','ON SEPTİLYON MUHAFIZI',
+  'YÜZ SEPTİLYON HÜKÜMDARI','OKTİLYONER','ON OKTİLYON KAŞİFİ','YÜZ OKTİLYON EFENDİSİ','NONİLYON TANRISI'
+];
+for(let index=31;index<=72;index++){
+  const unitExp=Math.floor(index/3)*3;
+  const unit=NUMBER_UNITS.find(item=>item.exp===unitExp)?.name||'Tresvigintilyon';
+  const name=index%3===1?`ON ${unit.toLocaleUpperCase('tr-TR')}`:
+    (index%3===2?`YÜZ ${unit.toLocaleUpperCase('tr-TR')}`:`${unit.toLocaleUpperCase('tr-TR')}ER`);
+  RANK_NAMES.push(name);
+}
+const RANK_ICONS = ['🌱','🔟','💯','🪙','🔷','🧲','💰','🌟','🏙️','💎','🛡️','👑','🌠','⚡','🔮','💠','🪐','🌞','🧬','🌌','🦄','💫','🌈','🌀','🛰️','☄️','🌑','♾️','🧿','🌐','🏆'];
+const RANK_COLORS = ['#ffd34e','#fbbf24','#f59e0b','#eab308','#84cc16','#22c55e','#10b981','#14b8a6','#06b6d4','#0ea5e9','#3b82f6','#6366f1','#8b5cf6','#a855f7','#c026d3','#d946ef','#ec4899','#f43f5e','#fb7185','#f97316','#facc15','#a3e635','#4ade80','#2dd4bf','#38bdf8','#60a5fa','#818cf8','#a78bfa','#e879f9','#f0abfc','#fff0a2'];
+const RANK_PERK_TYPES = [
+  {type:'click',label:'Tıklama gücü',base:0.10,step:0.025},
+  {type:'auto',label:'Otomatik kazanç',base:0.12,step:0.03},
+  {type:'pet',label:'Pet gücü',base:0.06,step:0.015},
+  {type:'luck',label:'Nadir pet şansı',base:0.045,step:0.01},
+  {type:'crit',label:'Kritik vuruş şansı',base:0.0065,step:0.001},
+  {type:'discount',label:'Mağaza ve yumurta indirimi',base:0.015,step:0.004}
+];
+function rankUnitForExponent(exp){
+  if(exp>=3){const unit=NUMBER_UNITS.find(u=>u.exp===Math.floor(exp/3)*3);return unit?unit.name:'Sayı';}
+  return exp===2?'Yüzlük':exp===1?'Onluk':'Başlangıç';
+}
+function rankPerkForIndex(index){
+  if(index===0)return {type:'starter',value:0,label:'Başlangıç bonusu',description:'Temel tıklama gücü ve ilk yükseltmeler.'};
+  if(index===RANK_NAMES.length-1)return {type:'final',value:0.10,label:'Tresvigintilyon Tahtı',description:'Oyunu bitir: özel Tresvigintilyon aurası ve final rozeti.'};
+  const template=RANK_PERK_TYPES[(index-1)%RANK_PERK_TYPES.length];
+  const cycle=Math.floor((index-1)/RANK_PERK_TYPES.length);
+  const value=template.base+template.step*cycle;
+  const amount=template.type==='crit'?`+${(value*100).toFixed(1)}%`:`+${(value*100).toFixed(0)}%`;
+  return {type:template.type,value,label:template.label,description:`${template.label} ${amount} (kalıcı)`};
+}
+const RANKS = RANK_NAMES.map((name,index)=>({
+  name,value:index===0?0:Math.pow(10,index),icon:RANK_ICONS[index%RANK_ICONS.length],color:RANK_COLORS[index%RANK_COLORS.length],
+  unit:rankUnitForExponent(index),perk:rankPerkForIndex(index)
+}));
+const GAME_FINISH_VALUE = 1e72;
+const RARITY_UNLOCK_RANK = {common:0,uncommon:0,rare:0,epic:0,legendary:0,mythic:0,secret:0,celestial:0,divine:15,eternal:18,infinite:24,nonillion:30,vigintillion:33,unvigintillion:36,duovigintillion:42,tresvigintillion:48,quattuorvigintillion:54,quinvigintillion:60,sexvigintillion:66,septemvigintillion:72};
+// ========== STATE ==========
+const BALANCE_VERSION = 4;
+const MAX_PURCHASE_MULTIPLIER = 2.5;
+const MAX_ECONOMY_MULTIPLIER = 4.0;
+const defaultState = () => ({
+  balanceVersion:BALANCE_VERSION, money:0, total:0, clicks:0, best:0, owned:{}, multi:1,
+  pets:[], equippedPet:null, equippedPets:[], rebirths:0, level:1, xp:0,
+  questProgress:0, questClaimed:false, dailyLast:0, dailyStreak:0,
+  achievements:{}, settings:{sound:true,particles:true,crit:true,autosave:true,leaderboard:false,theme:'midnight'},
+  displayName:'Oyuncu', rankAnnounced:0, gameCompleted:false, boostUntil:0, boostType:'all', boostMultiplier:1,
+  lastSave:Date.now(), totalClicksEver:0, redeemed:[]
+});
+let state = defaultState();
+let activeTab = 'all';
+let toastTimer = null;
+const MAX_EGGS_PER_OPEN = 1000;
+let eggOpening = false;
+let fuseSelection = [];
+// ========== HELPERS ==========
+const fmt = value => {
+  const n=Math.max(0,Number(value)||0);
+  if(!Number.isFinite(n))return 'Çok büyük';
+  if(n<1000)return Math.floor(n).toLocaleString('tr-TR');
+  let exp=Math.max(3,Math.floor(Math.log10(n)/3)*3);
+  let scaled=n/Math.pow(10,exp);
+  if(scaled>=999.5&&exp<30){exp+=3;scaled=n/Math.pow(10,exp);}
+  const unit=NUMBER_UNITS.find(u=>u.exp===exp);
+  if(!unit)return n.toExponential(2).replace('.',',');
+  const digits=scaled>=100?0:(scaled>=10?1:2);
+  return scaled.toLocaleString('tr-TR',{minimumFractionDigits:digits,maximumFractionDigits:digits})+' '+unit.name;
+};
+const count = id => state.owned[id]||0;
+function rebuildOwnedMultiplier(owned={}){
+  let result=1;
+  for(const item of ITEMS){
+    if(item.type!=='multi')continue;
+    const amount=Math.max(0,Math.min(100,Math.floor(Number(owned[item.id])||0)));
+    for(let n=0;n<amount && result<MAX_PURCHASE_MULTIPLIER;n++) result=Math.min(MAX_PURCHASE_MULTIPLIER,result*item.power);
+  }
+  return Math.max(1,result);
+}
+function migrateBalanceState(saved={}){
+  const version=Number(saved.balanceVersion)||0;
+  if(version<3) state.multi=rebuildOwnedMultiplier(state.owned||{});
+  if(version<4) state.gameCompleted=false;
+  state.multi=Math.max(1,Math.min(MAX_PURCHASE_MULTIPLIER,Number(state.multi)||1));
+  state.balanceVersion=BALANCE_VERSION;
+}
+const rankIndexFor = total => {
+  let index=0;
+  for(let i=1;i<RANKS.length;i++){if(total>=RANKS[i].value)index=i;else break;}
+  return index;
+};
+const currentRankIndex = () => rankIndexFor(state.total);
+const rankPerkTotals = (rankIndex=currentRankIndex()) => {
+  const totals={click:0,auto:0,pet:0,luck:0,crit:0,discount:0};
+  for(let i=1;i<=Math.min(rankIndex,RANK_NAMES.length-2);i++){
+    const template=RANK_PERK_TYPES[(i-1)%RANK_PERK_TYPES.length];
+    const cycle=Math.floor((i-1)/RANK_PERK_TYPES.length);
+    totals[template.type]+=template.base+template.step*cycle;
+  }
+  return totals;
+};
+const rankMultiplier = () => 1 + currentRankIndex()*0.015;
+const weeklyMultiplier = () => new Date().getDay()===5 ? 1.5 : 1;
+function temporaryPowerMultiplier(type){
+  if(!state.boostUntil || state.boostUntil<=Date.now()) return 1;
+  if(state.boostType==='all' || state.boostType===type) return Math.max(1,Number(state.boostMultiplier)||2);
+  return 1;
+}
+const rebirthMultiplier = () => 1 + Math.max(0,Number(state.rebirths)||0)*0.05;
+const economyMultiplier = () => Math.min(1e12,
+  Math.max(1,state.multi||1) * rebirthMultiplier() * (1+petBonus()) * rankMultiplier()
+);
+function applyRankTheme(index=currentRankIndex()){
+  const rank=RANKS[index];
+  document.documentElement.style.setProperty('--rank-accent',rank.color);
+  document.documentElement.style.setProperty('--rank-accent-soft',rank.color+'28');
+  document.body.dataset.rankTier=String(index);
+}
+function applyGameTheme(){
+  const theme=state.settings?.theme||'midnight';
+  document.body.dataset.theme=['midnight','ocean','nebula','ember','emerald'].includes(theme)?theme:'midnight';
+  const select=$('themeSelect');
+  if(select) select.value=document.body.dataset.theme;
+}
+function updateBonusUI(){
+  const friday=new Date().getDay()===5;
+  const weekly=$('weeklyEvent');
+  if(weekly){
+    weekly.classList.toggle('active',friday);
+    weekly.textContent=friday?'🎉 CUMA BONUSU AKTİF · TÜM KAZANÇLAR ×1,5':'✨ Her cuma tüm kazançlar ×1,5!';
+  }
+  const status=$('powerupStatus');
+  if(status){
+    const left=Math.max(0,Math.ceil(((state.boostUntil||0)-Date.now())/1000));
+    if(left>0){
+      const label=state.boostType==='click'?'Tıklama Freni':(state.boostType==='auto'?'Otomatik Gelir':'Süper Güç');
+      status.classList.add('active');
+      status.textContent=`⚡ ${label} ×${state.boostMultiplier||2} · ${left} sn kaldı`;
+    }else{
+      status.classList.remove('active');
+      status.textContent='🪙 Altın Robux ara sıra ortaya çıkar; yakala ve geçici güç kazan!';
+    }
+  }
+}
+function getRarityWeights(){
+  const rank=currentRankIndex(), perks=rankPerkTotals(rank);
+  const available=RARITY_CHANCE.filter(item=>(RARITY_UNLOCK_RANK[item.r]??99)<=rank&&PET_POOL.some(p=>p.rarity===item.r&&(p.unlockRank||0)<=rank));
+  const weighted=available.map((item,index)=>{
+    const highTier=available.length<=1?0:index/(available.length-1);
+    return {r:item.r,w:item.w*(1+perks.luck*highTier*2)};
+  });
+  const sum=weighted.reduce((total,item)=>total+item.w,0)||1;
+  return weighted.map(item=>({...item,w:item.w/sum*100}));
+};
+const costOf = it => Math.max(1,Math.ceil(it.cost * Math.pow(1.55, count(it.id)) * (1-Math.min(0.18,rankPerkTotals().discount*0.35))));
+const equippedPetIds = () => {
+  const ids = Array.isArray(state.equippedPets) ? state.equippedPets : (state.equippedPet ? [state.equippedPet] : []);
+  return [...new Set(ids)].filter(id => state.pets.some(p => p.id === id)).slice(0,3);
+};
+const petBonus = () => {
+  const ids = equippedPetIds();
+  const raw=state.pets.filter(p=>ids.includes(p.id)).reduce((sum,p)=>sum+Math.max(0,Number(p.power)||0)/100,0);
+  // Güçlü ve nadir petler fark yaratır; ancak üç pet birlikte ekonomiyi patlatamaz.
+  return Math.min(1.8,Math.log10(1+raw)*0.45) * (1+Math.min(0.5,rankPerkTotals().pet));
+};
+const clickPower = () => {
+  const base = 1 + ITEMS.filter(x=>x.type==='click').reduce((s,x)=>s+count(x.id)*x.power,0);
+  return Math.max(1,Math.floor(base * economyMultiplier() * (1+rankPerkTotals().click) * weeklyMultiplier() * temporaryPowerMultiplier('click')));
+};
+const autoPower = () => {
+  const base = ITEMS.filter(x=>x.type==='auto').reduce((s,x)=>s+count(x.id)*x.power,0);
+  // Kesirli saniyelik gelir korunur; düşük rütbelerde otomasyon sıfıra yuvarlanmaz.
+  return Math.max(0,base * economyMultiplier() * (1+rankPerkTotals().auto) * weeklyMultiplier() * temporaryPowerMultiplier('auto'));
+};
+const critChance = () => Math.min(0.12, ITEMS.filter(x=>x.type==='crit').reduce((s,x)=>s+count(x.id)*x.power,0)+rankPerkTotals().crit);
+const offlineBonus = () => 1 + ITEMS.filter(x=>x.type==='offline').reduce((s,x)=>s+count(x.id)*x.power,0);
+// Yumurta fiyatı pet sayısına göre artmaz: sınırsız koleksiyon fiyatı erişilemez yapmamalı.
+// Fiyat rütbeye göre ölçeklenir; istemci ve sunucu aynı formülü kullanır.
+const eggPrice = () => {
+  const rankScale=Math.pow(10, currentRankIndex()*0.12);
+  const discount=Math.min(0.45,rankPerkTotals().discount);
+  return Math.min(GAME_FINISH_VALUE,Math.max(100,Math.floor(500*rankScale*(1-discount))));
+};
+const eggTierName = () => {
+  const index=currentRankIndex();
+  if(index<3)return 'Başlangıç Yumurtası';
+  const unit=RANKS[index].unit;
+  return unit+' Yumurtası';
+};
+function add(n, xpGain=true){
+  state.money += n;
+  state.total += n;
+  state.best = Math.max(state.best, state.money);
+  if(xpGain && n>0){
+    const xp = Math.max(1, Math.floor(Math.log10(n+1)*2));
+    state.xp += xp;
+    while(state.xp >= xpNeeded()){
+      state.xp -= xpNeeded();
+      state.level++;
+      toast(`⭐ Seviye ${state.level}!`);
+      playSound('level');
+    }
+  }
+}
+function xpNeeded(){ return Math.floor(80 * Math.pow(1.35, state.level-1)); }
+function dailyQuestReward(){
+  // Günlük görevin sabit ödülü: hem gösterimde hem tahsilatta 520 R$.
+  return 520;
+}
+function applyServerProfile(profile){
+  if(!profile || typeof profile!=='object') throw new Error('Sunucudan geçerli oyuncu profili gelmedi.');
+  const fresh=defaultState();
+  state={
+    ...fresh,...profile,
+    money:Math.max(0,Number(profile.money)||0),
+    total:Math.max(0,Number(profile.total)||0),
+    clicks:Math.max(0,Number(profile.clicks)||0),
+    best:Math.max(0,Number(profile.best)||0),
+    owned:profile.owned&&typeof profile.owned==='object'?profile.owned:{},
+    pets:Array.isArray(profile.pets)?profile.pets:[],
+    equippedPets:Array.isArray(profile.equippedPets)?profile.equippedPets.slice(0,3):(profile.equippedPet?[profile.equippedPet]:[]),
+    achievements:profile.achievements&&typeof profile.achievements==='object'?profile.achievements:{},
+    redeemed:Array.isArray(profile.redeemed)?profile.redeemed:[],
+    settings:{...fresh.settings,...(profile.settings||{})},
+    displayName:cleanDisplayName(profile.displayName||currentUser?.displayName||'Oyuncu'),
+    level:Math.max(1,Number(profile.level)||1),
+    rebirths:Math.max(0,Number(profile.rebirths)||0),
+    multi:Math.max(1,Number(profile.multi)||1)
+  };
+  state.equippedPet=state.equippedPets[0]||profile.equippedPet||null;
+  migrateBalanceState(profile);
+  syncSettingsToggles();
+  applyGameTheme();
+}
+async function gameApi(action,payload={}){
+  if(!currentUser) throw new Error('Bulut hesabına giriş yapılmamış.');
+  const token=await currentUser.getIdToken();
+  const response=await fetch(SUPABASE_GAME_API,{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'apikey':SUPABASE_PUBLISHABLE_KEY,
+      'Authorization':'Bearer '+token
+    },
+    body:JSON.stringify({action,...payload})
+  });
+  let data={};
+  try{data=await response.json();}catch{}
+  if(!response.ok) throw new Error(data.error||('Sunucu hatası ('+response.status+').'));
+  return data;
+}
+async function persistCloud(){
+  if(mode!=='cloud'||!currentUser)return;
+  if(cloudWriteBusy){await new Promise(resolve=>setTimeout(resolve,200));return persistCloud();}
+  cloudWriteBusy=true;
+  try{
+    const result=await gameApi('savePreferences',{
+      displayName:cleanDisplayName(state.displayName||currentUser.displayName||'Oyuncu'),
+      settings:state.settings
+    });
+    applyServerProfile(result.profile);
+    return result;
+  }finally{cloudWriteBusy=false;}
+}
+function writeLocalSave(){
+  try{localStorage.setItem('robuxClickerPro',JSON.stringify(state));}
+  catch(e){console.warn('Local save failed',e);toast('Yerel kayıt alanı dolu olabilir.');}
+}
+function save(force=false){
+  state.lastSave=Date.now();
+  if(mode==='local'&&!state.settings.autosave&&!force)return Promise.resolve();
+  if(mode==='local'){
+    if(force){
+      if(localSaveTimer){clearTimeout(localSaveTimer);localSaveTimer=null;}
+      writeLocalSave();
+    }else if(!localSaveTimer){
+      // Çok sık tıklamada her tıkta büyük JSON nesnesini yazmak yerine kısa aralıklarla kaydet.
+      localSaveTimer=setTimeout(()=>{localSaveTimer=null;writeLocalSave();},1800);
+    }
+    return Promise.resolve();
+  }
+  if(mode==='cloud'&&currentUser){
+    if(force){
+      if(cloudSaveTimer){clearTimeout(cloudSaveTimer);cloudSaveTimer=null;}
+      return persistCloud().catch(err=>{console.error('Supabase preferences save failed',err);toast('Bulut ayarları kaydedilemedi: '+err.message);throw err;});
+    }
+    if(!cloudSaveTimer){
+      cloudSaveTimer=setTimeout(()=>{
+        cloudSaveTimer=null;
+        persistCloud().catch(err=>console.error('Supabase preferences save failed',err));
+      },15000);
+    }
+  }
+  return Promise.resolve();
+}
+
+window.addEventListener('pagehide',()=>{
+  if(mode==='local'&&localSaveTimer){
+    clearTimeout(localSaveTimer);localSaveTimer=null;writeLocalSave();
+  }
+});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'&&mode==='local'&&localSaveTimer){
+    clearTimeout(localSaveTimer);localSaveTimer=null;writeLocalSave();
+  }
+});
+async function manualSave(){
+  try{await save(true);toast(mode==='cloud'?'Bulut ayarları kaydedildi':'Yerel kayıt tamamlandı');}
+  catch(e){toast('Kayıt başarısız.');}
+}
+function toast(t){
+  const el = $('toast');
+  el.textContent = t;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 2000);
+}
+const audioCtx = window.AudioContext || window.webkitAudioContext ? new (window.AudioContext||window.webkitAudioContext)() : null;
+
+/* ===== Scratch-style customization (fully wired) ===== */
+const CUSTOMIZATION_KEY = 'robuxClickerCustomizationV1';
+const CUSTOM_ASSET_DB = 'robuxClickerCustomAssets';
+const CUSTOM_ASSET_STORE = 'assets';
+const CUSTOM_DEFAULTS = {object:'robux',musicTrack:'arcade',musicEnabled:true,musicVolume:28,effectVolume:70};
+let customization = {...CUSTOM_DEFAULTS};
+let customImageUrl = null;
+let customMusicUrl = null;
+let customEffectUrls = {click:null,buy:null,level:null};
+let musicAudio = null;
+let musicTimer = null;
+let musicIndex = 0;
+let musicStarted = false;
+let musicPaused = false;
+let customDbPromise = null;
+const sessionCustomAssets = Object.create(null);
+
+const CLICK_OBJECTS = {
+  robux:{icon:'R$',label:'Robux',background:null},
+  coin:{icon:'🪙',label:'Altın',background:'radial-gradient(circle at 30% 20%,#fff8cc,#ffd34e 42%,#b86a18 100%)'},
+  diamond:{icon:'💎',label:'Elmas',background:'radial-gradient(circle at 30% 20%,#f0ffff,#55eaff 42%,#1762ae 100%)'},
+  star:{icon:'⭐',label:'Yıldız',background:'radial-gradient(circle at 30% 20%,#fffbd0,#ffe56e 42%,#c17a16 100%)'},
+  gem:{icon:'🔮',label:'Kristal',background:'radial-gradient(circle at 30% 20%,#fff0ff,#c084fc 42%,#5426a5 100%)'},
+  paw:{icon:'🐾',label:'Pati',background:'radial-gradient(circle at 30% 20%,#fff0dc,#d6a3a3 42%,#70445f 100%)'},
+  fire:{icon:'🔥',label:'Alev',background:'radial-gradient(circle at 30% 20%,#fff4b5,#ff8b36 42%,#9c2818 100%)'},
+  ice:{icon:'🧊',label:'Buz',background:'radial-gradient(circle at 30% 20%,#f2ffff,#8be7f6 42%,#286ca8 100%)'},
+  crown:{icon:'👑',label:'Taç',background:'radial-gradient(circle at 30% 20%,#fff5bf,#e8bb4d 42%,#8a4c20 100%)'},
+  rocket:{icon:'🚀',label:'Roket',background:'radial-gradient(circle at 30% 20%,#fff0d9,#ff8a80 42%,#7431a0 100%)'},
+  heart:{icon:'💖',label:'Kalp',background:'radial-gradient(circle at 30% 20%,#fff0fb,#ff8cc9 42%,#a3276f 100%)'},
+  cookie:{icon:'🍪',label:'Kurabiye',background:'radial-gradient(circle at 30% 20%,#fff0c7,#ce8a45 42%,#633414 100%)'},
+  planet:{icon:'🪐',label:'Gezegen',background:'radial-gradient(circle at 30% 20%,#f5eaff,#9c8bfa 42%,#32266f 100%)'},
+  trophy:{icon:'🏆',label:'Kupa',background:'radial-gradient(circle at 30% 20%,#fff7c4,#e7a832 42%,#814319 100%)'},
+  gift:{icon:'🎁',label:'Hediye',background:'radial-gradient(circle at 30% 20%,#ffe4f0,#f472b6 42%,#81266d 100%)'}
+};
+
+function readCustomization(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(CUSTOMIZATION_KEY)||'{}');
+    customization={...CUSTOM_DEFAULTS,...saved};
+  }catch(err){customization={...CUSTOM_DEFAULTS};}
+  if(!CLICK_OBJECTS[customization.object]&&customization.object!=='custom')customization.object='robux';
+  if(!['arcade','space','happy','custom','off'].includes(customization.musicTrack))customization.musicTrack='arcade';
+  customization.musicVolume=Math.max(0,Math.min(100,Number(customization.musicVolume)||0));
+  customization.effectVolume=Math.max(0,Math.min(100,Number(customization.effectVolume)||0));
+  if(customization.musicTrack==='off')customization.musicEnabled=false;
+}
+function saveCustomization(){
+  try{localStorage.setItem(CUSTOMIZATION_KEY,JSON.stringify(customization));}
+  catch(err){console.warn('Customization settings could not be saved',err);}
+}
+function openCustomAssetDB(){
+  if(!('indexedDB' in window))return Promise.reject(new Error('Bu tarayıcı dosyaları kalıcı saklamayı desteklemiyor.'));
+  if(customDbPromise)return customDbPromise;
+  customDbPromise=new Promise((resolve,reject)=>{
+    const request=indexedDB.open(CUSTOM_ASSET_DB,1);
+    request.onupgradeneeded=()=>{
+      const db=request.result;
+      if(!db.objectStoreNames.contains(CUSTOM_ASSET_STORE))db.createObjectStore(CUSTOM_ASSET_STORE);
+    };
+    request.onsuccess=()=>resolve(request.result);
+    request.onerror=()=>reject(request.error||new Error('Dosya deposu açılamadı.'));
+  });
+  return customDbPromise;
+}
+async function putCustomAsset(key,file){
+  try{
+    const db=await openCustomAssetDB();
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(CUSTOM_ASSET_STORE,'readwrite');
+      tx.objectStore(CUSTOM_ASSET_STORE).put(file,key);
+      tx.oncomplete=()=>resolve(true);
+      tx.onerror=()=>reject(tx.error||new Error('Dosya kaydedilemedi.'));
+      tx.onabort=()=>reject(tx.error||new Error('Dosya kaydı iptal edildi.'));
+    });
+    sessionCustomAssets[key]=file;
+    return true;
+  }catch(err){
+    // file:// and restricted preview contexts may block IndexedDB; keep the file usable for this session.
+    sessionCustomAssets[key]=file;
+    return false;
+  }
+}
+async function getCustomAsset(key){
+  try{
+    const db=await openCustomAssetDB();
+    const value=await new Promise((resolve,reject)=>{
+      const tx=db.transaction(CUSTOM_ASSET_STORE,'readonly');
+      const req=tx.objectStore(CUSTOM_ASSET_STORE).get(key);
+      req.onsuccess=()=>resolve(req.result||null);
+      req.onerror=()=>reject(req.error||new Error('Dosya okunamadı.'));
+    });
+    return value||sessionCustomAssets[key]||null;
+  }catch(err){return sessionCustomAssets[key]||null;}
+}
+async function deleteCustomAsset(key){
+  delete sessionCustomAssets[key];
+  try{
+    const db=await openCustomAssetDB();
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(CUSTOM_ASSET_STORE,'readwrite');
+      tx.objectStore(CUSTOM_ASSET_STORE).delete(key);
+      tx.oncomplete=()=>resolve(true);
+      tx.onerror=()=>reject(tx.error||new Error('Dosya silinemedi.'));
+    });
+  }catch(err){/* Session-only fallback is already cleared. */}
+  return true;
+}
+function replaceObjectUrl(oldUrl,blob){
+  if(oldUrl){try{URL.revokeObjectURL(oldUrl);}catch(e){}}
+  return blob?URL.createObjectURL(blob):null;
+}
+function applyClickObject(){
+  const orb=$('orb'),label=$('orbLabel'),img=$('orbCustomImage');
+  if(!orb||!label||!img)return;
+  if(customization.object==='custom'&&!customImageUrl){customization.object='robux';saveCustomization();}
+  const useCustom=customization.object==='custom'&&!!customImageUrl;
+  if(useCustom){
+    img.src=customImageUrl;img.classList.remove('hidden');label.classList.add('hidden');
+    orb.classList.add('custom-image');orb.style.background='radial-gradient(circle at 30% 20%,#ffffff,#b8c9ed 48%,#465b91 100%)';
+    orb.setAttribute('aria-label','Özel görsel ile Robux kazan');
+  }else{
+    img.removeAttribute('src');img.classList.add('hidden');label.classList.remove('hidden');orb.classList.remove('custom-image');
+    const item=CLICK_OBJECTS[customization.object]||CLICK_OBJECTS.robux;
+    label.textContent=item.icon;label.style.fontSize=item.icon==='R$'?'88px':'76px';
+    label.style.textShadow=item.icon==='R$'?'0 5px 0 #b65c22,0 10px 22px #9b3d1c':'0 4px 12px #0008';
+    orb.style.background=item.background||'';
+    orb.setAttribute('aria-label',item.label+' ile Robux kazan');
+  }
+  document.querySelectorAll('.object-choice').forEach(btn=>btn.classList.toggle('selected',btn.dataset.object===customization.object));
+  const status=$('clickImageStatus');
+  if(status)status.textContent=useCustom?'Kendi görselin aktif.':'Hazır simgelerden birini seçebilir veya PNG/JPG/WebP görseli yükleyebilirsin.';
+}
+
+const MUSIC_PATTERNS={
+  arcade:[523.25,659.25,783.99,659.25,523.25,392,440,523.25,659.25,587.33,523.25,440],
+  space:[392,493.88,587.33,493.88,349.23,440,523.25,440,329.63,392,493.88,392],
+  happy:[659.25,659.25,783.99,880,783.99,659.25,523.25,587.33,659.25,783.99,880,783.99]
+};
+function updateMusicUI(){
+  const select=$('musicTrackSelect'),vol=$('musicVolume'),effectVol=$('effectVolume'),toggle=$('musicToggle');
+  if(select)select.value=customization.musicTrack;
+  if(vol)vol.value=String(customization.musicVolume);
+  if(effectVol)effectVol.value=String(customization.effectVolume);
+  if(toggle){toggle.textContent=musicStarted?'⏸ Müziği duraklat':'▶ Müziği başlat';toggle.disabled=customization.musicTrack==='off';}
+  const status=$('musicStatus');
+  if(status){
+    if(customization.musicTrack==='off')status.textContent='Müzik kapalı';
+    else if(customization.musicTrack==='custom'&&!customMusicUrl)status.textContent='Önce kendi müziğini yükle';
+    else status.textContent=musicStarted?'Müzik çalıyor':'Müzik duraklatıldı';
+  }
+  const fileStatus=$('musicFileStatus');
+  if(fileStatus&&customMusicUrl)fileStatus.textContent='Kendi müziğin yüklendi ve bu tarayıcıya kaydedildi.';
+}
+function playMusicNote(freq){
+  if(!audioCtx||!freq||customization.musicVolume<=0)return;
+  try{
+    const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+    osc.type='square';osc.frequency.value=freq;
+    gain.gain.setValueAtTime(0.0001,audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime((customization.musicVolume/100)*0.025,audioCtx.currentTime+0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+0.19);
+    osc.connect(gain);gain.connect(audioCtx.destination);osc.start();osc.stop(audioCtx.currentTime+0.2);
+  }catch(err){console.warn('Built-in music note failed',err);}
+}
+function musicStep(){
+  if(!musicStarted||!customization.musicEnabled||!MUSIC_PATTERNS[customization.musicTrack])return;
+  const pattern=MUSIC_PATTERNS[customization.musicTrack];
+  playMusicNote(pattern[musicIndex%pattern.length]);musicIndex++;
+  musicTimer=setTimeout(musicStep,customization.musicTrack==='space'?360:245);
+}
+function stopMusic(manualPause=false){
+  musicStarted=false;
+  if(manualPause)musicPaused=true;
+  if(musicTimer){clearTimeout(musicTimer);musicTimer=null;}
+  if(musicAudio){musicAudio.pause();}
+  updateMusicUI();
+}
+async function startMusic(){
+  if(!customization.musicEnabled||customization.musicTrack==='off')return;
+  if(musicStarted)return;
+  musicPaused=false;
+  if(customization.musicTrack==='custom'){
+    if(!customMusicUrl){updateMusicUI();return;}
+    try{
+      if(!musicAudio){musicAudio=new Audio();musicAudio.loop=true;}
+      if(musicAudio.src!==customMusicUrl)musicAudio.src=customMusicUrl;
+      musicAudio.volume=customization.musicVolume/100;
+      await musicAudio.play();musicStarted=true;updateMusicUI();
+    }catch(err){musicStarted=false;const st=$('musicStatus');if(st)st.textContent='Tarayıcı müziği başlatamadı; tekrar ▶ tuşuna bas.';}
+    return;
+  }
+  if(!audioCtx){const st=$('musicStatus');if(st)st.textContent='Bu tarayıcı müzik üretimini desteklemiyor.';return;}
+  try{if(audioCtx.state==='suspended')await audioCtx.resume();}catch(err){console.warn('Audio context resume failed',err);}
+  musicStarted=true;musicIndex=0;musicStep();updateMusicUI();
+}
+async function loadCustomizationAssets(){
+  readCustomization();
+  try{
+    const [image,music,click,buy,level]=await Promise.all([
+      getCustomAsset('click-image'),getCustomAsset('music'),getCustomAsset('effect-click'),getCustomAsset('effect-buy'),getCustomAsset('effect-level')
+    ]);
+    customImageUrl=replaceObjectUrl(customImageUrl,image);
+    customMusicUrl=replaceObjectUrl(customMusicUrl,music);
+    customEffectUrls.click=replaceObjectUrl(customEffectUrls.click,click);
+    customEffectUrls.buy=replaceObjectUrl(customEffectUrls.buy,buy);
+    customEffectUrls.level=replaceObjectUrl(customEffectUrls.level,level);
+  }catch(err){console.warn('Custom assets could not be restored',err);}
+  applyClickObject();updateMusicUI();
+}
+function bindCustomizationControls(){
+  const choices=$('objectChoices');
+  if(choices)choices.addEventListener('click',e=>{
+    const button=e.target.closest('[data-object]');if(!button)return;
+    customization.object=button.dataset.object;saveCustomization();applyClickObject();
+  });
+  const imageInput=$('clickImageUpload');
+  if(imageInput)imageInput.addEventListener('change',async()=>{
+    const file=imageInput.files&&imageInput.files[0];if(!file)return;
+    if(!file.type.startsWith('image/')){toast('Lütfen bir görsel dosyası seç.');imageInput.value='';return;}
+    if(file.size>3*1024*1024){toast('Görsel en fazla 3 MB olabilir.');imageInput.value='';return;}
+    try{const persistent=await putCustomAsset('click-image',file);customImageUrl=replaceObjectUrl(customImageUrl,file);customization.object='custom';saveCustomization();applyClickObject();const st=$('clickImageStatus');if(st&&!persistent)st.textContent='Görsel bu oturumda kullanılacak; tarayıcı depolaması kapalı olduğu için kalıcı kaydedilemedi.';toast('Özel tıklama görseli yüklendi!');}
+    catch(err){console.error(err);toast('Görsel kaydedilemedi: '+err.message);}
+  });
+  const clearImage=$('clearClickImage');
+  if(clearImage)clearImage.addEventListener('click',async()=>{
+    try{await deleteCustomAsset('click-image');customImageUrl=replaceObjectUrl(customImageUrl,null);if(customization.object==='custom')customization.object='robux';saveCustomization();applyClickObject();if(imageInput)imageInput.value='';toast('Özel görsel kaldırıldı.');}
+    catch(err){toast('Görsel kaldırılamadı.');}
+  });
+  const musicSelect=$('musicTrackSelect');
+  if(musicSelect)musicSelect.addEventListener('change',async()=>{
+    customization.musicTrack=musicSelect.value;customization.musicEnabled=musicSelect.value!=='off';stopMusic();saveCustomization();updateMusicUI();
+    if(customization.musicEnabled)await startMusic();
+  });
+  const musicInput=$('musicUpload');
+  if(musicInput)musicInput.addEventListener('change',async()=>{
+    const file=musicInput.files&&musicInput.files[0];if(!file)return;
+    if(!file.type.startsWith('audio/')){toast('Lütfen bir ses dosyası seç.');musicInput.value='';return;}
+    if(file.size>12*1024*1024){toast('Müzik dosyası en fazla 12 MB olabilir.');musicInput.value='';return;}
+    try{
+      const persistent=await putCustomAsset('music',file);customMusicUrl=replaceObjectUrl(customMusicUrl,file);
+      customization.musicTrack='custom';customization.musicEnabled=true;saveCustomization();stopMusic();updateMusicUI();await startMusic();
+      const fs=$('musicFileStatus');if(fs)fs.textContent=file.name+(persistent?' yüklendi ve kaydedildi.':' yüklendi; yalnızca bu oturumda kullanılacak.');toast('Kendi müziğin yüklendi!');
+    }catch(err){console.error(err);toast('Müzik kaydedilemedi: '+err.message);}
+  });
+  const musicToggle=$('musicToggle');
+  if(musicToggle)musicToggle.addEventListener('click',()=>{if(musicStarted)stopMusic(true);else startMusic();});
+  const musicVol=$('musicVolume');
+  if(musicVol)musicVol.addEventListener('input',()=>{
+    customization.musicVolume=Number(musicVol.value);if(musicAudio)musicAudio.volume=customization.musicVolume/100;saveCustomization();
+  });
+  const effectVol=$('effectVolume');
+  if(effectVol)effectVol.addEventListener('input',()=>{customization.effectVolume=Number(effectVol.value);saveCustomization();});
+  const effectInputs={click:$('effectClickUpload'),buy:$('effectBuyUpload'),level:$('effectLevelUpload')};
+  Object.entries(effectInputs).forEach(([kind,input])=>{
+    if(!input)return;
+    input.addEventListener('change',async()=>{
+      const file=input.files&&input.files[0];if(!file)return;
+      if(!file.type.startsWith('audio/')){toast('Lütfen bir ses dosyası seç.');input.value='';return;}
+      if(file.size>5*1024*1024){toast('Ses efekti en fazla 5 MB olabilir.');input.value='';return;}
+      try{const persistent=await putCustomAsset('effect-'+kind,file);customEffectUrls[kind]=replaceObjectUrl(customEffectUrls[kind],file);const st=$('effectStatus');if(st)st.textContent=kind+' sesi için özel dosya '+(persistent?'yüklendi ve kaydedildi.':'yüklendi; yalnızca bu oturumda kullanılacak.');toast('Özel ses efekti yüklendi!');}
+      catch(err){console.error(err);toast('Ses kaydedilemedi: '+err.message);}
+    });
+  });
+  document.querySelectorAll('[data-clear-effect]').forEach(button=>button.addEventListener('click',async()=>{
+    const kind=button.dataset.clearEffect;if(!['click','buy','level'].includes(kind))return;
+    try{await deleteCustomAsset('effect-'+kind);customEffectUrls[kind]=replaceObjectUrl(customEffectUrls[kind],null);const input=effectInputs[kind];if(input)input.value='';const st=$('effectStatus');if(st)st.textContent='Özel '+kind+' sesi kaldırıldı; varsayılan ses kullanılıyor.';toast('Varsayılan sese dönüldü.');}
+    catch(err){toast('Ses dosyası kaldırılamadı.');}
+  }));
+  readCustomization();updateMusicUI();
+}
+function playSound(type){
+  if(!state.settings.sound)return;
+  const customType=type==='crit'?'click':type;
+  const customUrl=['click','buy','level'].includes(customType)?customEffectUrls[customType]:null;
+  if(customUrl){
+    try{const audio=new Audio(customUrl);audio.volume=Math.max(0,Math.min(1,(Number(customization.effectVolume)||0)/100));audio.play().catch(err=>console.warn('Custom effect playback blocked',err));return;}catch(err){console.warn('Custom effect failed',err);}
+  }
+  if(!audioCtx)return;
+  try{
+    const effectScale=Math.max(0,Math.min(1.5,(Number(customization.effectVolume)||0)/70));
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    if(type==='click'){ o.frequency.value=520; g.gain.setValueAtTime(0.08*effectScale,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.08); o.start(now); o.stop(now+0.08); }
+    else if(type==='buy'){ o.frequency.value=380; g.gain.setValueAtTime(0.1*effectScale,now); o.frequency.linearRampToValueAtTime(620,now+0.12); g.gain.exponentialRampToValueAtTime(0.001,now+0.15); o.start(now); o.stop(now+0.15); }
+    else if(type==='crit'){ o.frequency.value=880; g.gain.setValueAtTime(0.12*effectScale,now); o.frequency.linearRampToValueAtTime(1200,now+0.1); g.gain.exponentialRampToValueAtTime(0.001,now+0.18); o.start(now); o.stop(now+0.18); }
+    else if(type==='egg'){ o.type='triangle'; o.frequency.value=300; g.gain.setValueAtTime(0.1*effectScale,now); o.frequency.linearRampToValueAtTime(800,now+0.25); g.gain.exponentialRampToValueAtTime(0.001,now+0.3); o.start(now); o.stop(now+0.3); }
+    else if(type==='level'){ o.frequency.value=440; g.gain.setValueAtTime(0.1*effectScale,now); o.frequency.linearRampToValueAtTime(880,now+0.2); g.gain.exponentialRampToValueAtTime(0.001,now+0.25); o.start(now); o.stop(now+0.25); }
+    else if(type==='rebirth'){ o.type='sawtooth'; o.frequency.value=200; g.gain.setValueAtTime(0.08*effectScale,now); o.frequency.linearRampToValueAtTime(600,now+0.4); g.gain.exponentialRampToValueAtTime(0.001,now+0.45); o.start(now); o.stop(now+0.45); }
+  }catch(e){}
+}
+function burst(x,y,text,isCrit){
+  if(!state.settings.particles) return;
+  const el = document.createElement('div');
+  el.className = 'float'+(isCrit?' crit':'');
+  el.textContent = text;
+  el.style.left = x+'px';
+  el.style.top = y+'px';
+  $('orbWrap').appendChild(el);
+  setTimeout(()=>el.remove(),900);
+  for(let i=0;i< (isCrit?8:5);i++){
+    const p = document.createElement('i');
+    p.className='spark';
+    p.style.left=x+'px'; p.style.top=y+'px';
+    p.style.setProperty('--x',(Math.random()*120-60)+'px');
+    p.style.setProperty('--y',(Math.random()*-110-20)+'px');
+    if(isCrit) p.style.background='#ff6b9d';
+    $('orbWrap').appendChild(p);
+    setTimeout(()=>p.remove(),700);
+  }
+}
+// Scratch'teki power-up mantığından esinlenen, kod gerektirmeyen Altın Robux etkinliği.
+let goldenSpawnTimer=null, goldenExpireTimer=null, goldenVisible=false;
+function scheduleGoldenRobux(){
+  if(goldenSpawnTimer)clearTimeout(goldenSpawnTimer);
+  if(goldenExpireTimer)clearTimeout(goldenExpireTimer);
+  goldenSpawnTimer=null;goldenExpireTimer=null;
+  if(!mode)return;
+  const delay=mode==='cloud'&&Number(state.goldenNextAt)>0
+    ?Math.max(0,Number(state.goldenNextAt)-Date.now())
+    :55000+Math.random()*45000;
+  goldenSpawnTimer=setTimeout(showGoldenRobux,delay);
+}
+function showGoldenRobux(){
+  if(!mode)return scheduleGoldenRobux();
+  const coin=$('goldenRobux');
+  if(!coin)return;
+  if(mode==='cloud'&&Number(state.goldenExpiresAt)>0&&Date.now()>Number(state.goldenExpiresAt)){
+    gameApi('missGolden').then(r=>{applyServerProfile(r.profile);scheduleGoldenRobux();}).catch(e=>console.warn('Golden refresh failed',e));
+    return;
+  }
+  goldenVisible=true;
+  coin.classList.remove('hidden');
+  coin.disabled=false;
+  coin.style.right=(8+Math.random()*12)+'px';
+  const visibleFor=mode==='cloud'&&Number(state.goldenExpiresAt)>0
+    ?Math.max(500,Number(state.goldenExpiresAt)-Date.now())
+    :12000;
+  goldenExpireTimer=setTimeout(async()=>{
+    goldenVisible=false;coin.classList.add('hidden');
+    if(mode==='cloud'){
+      try{const r=await gameApi('missGolden');applyServerProfile(r.profile);}
+      catch(e){console.warn('Golden expiry update failed',e);}
+    }
+    scheduleGoldenRobux();
+  },visibleFor);
+}
+async function collectGoldenRobux(){
+  if(!goldenVisible)return;
+  if(mode==='cloud')await flushPendingCloudClicks();
+  goldenVisible=false;
+  if(goldenExpireTimer)clearTimeout(goldenExpireTimer);
+  const coin=$('goldenRobux');coin.classList.add('hidden');
+  if(mode==='cloud'){
+    try{
+      const result=await gameApi('golden');
+      applyServerProfile(result.profile);
+      const boost=result.boost||{};
+      const label=boost.type==='click'?'×2 TIKLAMA':(boost.type==='auto'?'×2 OTOMATİK GELİR':'×1,5 TÜM KAZANÇLAR');
+      toast('🪙 Altın Robux! +'+fmt(result.gain||0)+' R$ · '+label);
+      playSound('level');updateBonusUI();render();scheduleGoldenRobux();
+    }catch(err){toast(err.message||'Altın Robux alınamadı.');scheduleGoldenRobux();}
+    return;
+  }
+  const roll=Math.random();
+  if(roll<0.42){state.boostType='click';state.boostMultiplier=2;state.boostUntil=Date.now()+25000;toast('🪙 Altın Robux! 25 saniye ×2 TIKLAMA!');}
+  else if(roll<0.84){state.boostType='auto';state.boostMultiplier=2;state.boostUntil=Date.now()+25000;toast('🪙 Altın Robux! 25 saniye ×2 OTOMATİK GELİR!');}
+  else{state.boostType='all';state.boostMultiplier=1.5;state.boostUntil=Date.now()+30000;toast('🪙 Altın Robux! 30 saniye ×1,5 TÜM KAZANÇLAR!');}
+  playSound('level');updateBonusUI();render();save();scheduleGoldenRobux();
+}
+// ========== CORE ACTIONS ==========
+function animateOrbClick(){
+  $('orb').style.transform='scale(.94)';
+  setTimeout(()=>$('orb').style.transform='',80);
+}
+function queueCloudClick(){
+  if(cloudClickPending>=120)return toast('Tıklamalar gönderiliyor, bir an bekle.');
+  cloudClickPending++;
+  animateOrbClick();
+  if(!cloudClickTimer)cloudClickTimer=setTimeout(()=>{cloudClickTimer=null;flushCloudClicks();},1000);
+}
+async function flushCloudClicks(){
+  if(cloudClickBusy||cloudClickPending<=0||mode!=='cloud')return;
+  cloudClickBusy=true;
+  const count=Math.min(30,cloudClickPending);
+  cloudClickPending-=count;
+  try{
+    const result=await gameApi('click',{count});
+    applyServerProfile(result.profile);
+    const rect=$('orb').getBoundingClientRect(),wrap=$('orbWrap').getBoundingClientRect();
+    burst(rect.left+rect.width/2-wrap.left,rect.top-wrap.top+25,(result.crit?'CRIT ':'')+'+'+fmt(result.gain||0)+' R$',!!result.crit);
+    if(result.crit)playSound('crit');else playSound('click');
+    if(result.achievements?.length){
+      const last=result.achievements[result.achievements.length-1];
+      toast('🏅 Başarım açıldı! +'+fmt(last.reward)+' R$');
+    }
+    render();
+  }catch(err){
+    console.error('Secure click failed',err);
+    toast(err.message||'Tıklama sunucuya gönderilemedi.');
+  }finally{
+    cloudClickBusy=false;
+    if(cloudClickPending>0&&!cloudClickTimer)cloudClickTimer=setTimeout(()=>{cloudClickTimer=null;flushCloudClicks();},1000);
+  }
+}
+async function flushPendingCloudClicks(){
+  if(cloudClickTimer){clearTimeout(cloudClickTimer);cloudClickTimer=null;}
+  while(cloudClickPending>0||cloudClickBusy){
+    if(!cloudClickBusy&&cloudClickPending>0)await flushCloudClicks();
+    else await new Promise(resolve=>setTimeout(resolve,30));
+  }
+}
+function doClick(e){
+  if(mode==='cloud'){queueCloudClick();return;}
+  let gain=clickPower();
+  let isCrit=false;
+  if(Math.random()<critChance()){
+    gain=Math.floor(gain*3);isCrit=true;
+    if(state.settings.crit)$('orb').classList.add('crit');
+    setTimeout(()=>$('orb').classList.remove('crit'),350);
+    playSound('crit');
+  }else playSound('click');
+  if(count('lucky'))gain+=Math.floor(gain*(.03+Math.random()*.08));
+  add(gain);state.clicks++;state.totalClicksEver++;
+  state.questProgress=Math.min(50,state.questProgress+1);
+  const rect=$('orb').getBoundingClientRect(),wrap=$('orbWrap').getBoundingClientRect();
+  burst(rect.left+rect.width/2-wrap.left,rect.top-wrap.top+25,(isCrit?'CRIT ':'')+'+'+fmt(gain)+' R$',isCrit);
+  animateOrbClick();checkAchievements();render();save();
+}
+async function buy(id){
+  const it=ITEMS.find(x=>x.id===id);if(!it)return;
+  if(mode==='cloud'){
+    try{await flushPendingCloudClicks();
+      const result=await gameApi('buy',{itemId:id});applyServerProfile(result.profile);
+      playSound('buy');toast(it.name+' satın alındı!');
+      if(result.achievements?.length)toast('🏅 Başarım açıldı! +'+fmt(result.achievements[0].reward)+' R$');
+      render();
+    }catch(err){toast(err.message||'Satın alma reddedildi.');}
+    return;
+  }
+  if((it.unlockRank||0)>currentRankIndex())return toast(`Bu yükseltme için ${RANKS[it.unlockRank].name} rütbesi gerekli!`);
+  const c=costOf(it);
+  if(it.type==='multi'&&state.multi>=MAX_PURCHASE_MULTIPLIER)return toast('Güç çekirdeği sınırına ulaştın!');
+  if(state.money<c)return toast('Yeterli Robux yok!');
+  state.money-=c;state.owned[id]=count(id)+1;
+  if(it.type==='multi')state.multi=Math.min(MAX_PURCHASE_MULTIPLIER,state.multi*it.power);
+  playSound('buy');toast(it.name+' satın alındı!');checkAchievements();render();save();
+}
+function selectedEggCount(){
+  const input=$('eggCountInput');
+  const raw=Number(input?.value);
+  if(!Number.isFinite(raw)||!Number.isInteger(raw)||raw<1)return 0;
+  return Math.min(MAX_EGGS_PER_OPEN,raw);
+}
+function updateEggQuantityUI(){
+  const input=$('eggCountInput');
+  if(!input)return;
+  input.max=String(MAX_EGGS_PER_OPEN);
+  const raw=String(input.value??'').trim();
+  let count=raw===''?0:selectedEggCount();
+  if(count>MAX_EGGS_PER_OPEN){count=MAX_EGGS_PER_OPEN;input.value=String(MAX_EGGS_PER_OPEN);}
+  const price=eggPrice();
+  const affordable=Math.max(0,Math.min(MAX_EGGS_PER_OPEN,Math.floor((Number(state.money)||0)/price)));
+  $('eggSelectedCount').textContent=count?fmt(count):'—';
+  $('eggTotalCost').textContent=count?fmt(price*count):'—';
+  $('eggAffordableCount').textContent=fmt(affordable);
+  $('openEggBtn').textContent=count?`${fmt(count)} Yumurta Aç`:'Adet gir';
+  $('openEggBtn').dataset.count=String(count||0);
+  document.querySelectorAll('[data-egg-count]').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.eggCount)===count));
+}
+async function openEgg(count=null){
+  if(eggOpening)return;
+  if(count===null||typeof count!=='number'&&typeof count!=='string')count=$('eggCountInput')?.value;
+  count=Number(count);
+  if(!Number.isSafeInteger(count)||count<1||count>MAX_EGGS_PER_OPEN){
+    return toast(`1 ile ${fmt(MAX_EGGS_PER_OPEN)} arasında geçerli bir yumurta sayısı gir.`);
+  }
+  if(mode==='cloud')await flushPendingCloudClicks();
+  const price=eggPrice();
+  const totalPrice=price*count;
+  if(count>Math.floor((Number(state.money)||0)/price))return toast(`${count} yumurta için yeterli Robux yok! MAX: ${fmt(Math.floor((Number(state.money)||0)/price))}`);
+  if(mode==='cloud'){
+    eggOpening=true;$('egg').classList.add('shake');playSound('egg');
+    try{
+      const result=await gameApi('egg',{count});
+      $('egg').classList.remove('shake');eggOpening=false;
+      applyServerProfile(result.profile);
+      if(count===1)showPetModal(result.pet);else toast(`🥚 ${fmt(result.pets?.length||count)} pet açıldı!`);
+      if(result.achievements?.length)toast('🏅 Pet başarımı açıldı!');
+      render();
+    }catch(err){$('egg').classList.remove('shake');eggOpening=false;toast(err.message||'Yumurta açılamadı.');}
+    return;
+  }
+  state.money-=totalPrice;eggOpening=true;$('egg').classList.add('shake');playSound('egg');
+  setTimeout(()=>{
+    $('egg').classList.remove('shake');
+    const opened=[];
+    for(let n=0;n<count;n++){
+      const weights=getRarityWeights(),roll=Math.random()*100;let acc=0,rarity=weights[0]?.r||'common';
+      for(const r of weights){acc+=r.w;if(roll<=acc){rarity=r.r;break;}}
+      const pool=PET_POOL.filter(p=>p.rarity===rarity&&(p.unlockRank||0)<=currentRankIndex());
+      const base=pool[Math.floor(Math.random()*pool.length)]||PET_POOL[0];
+      const rawPower=Math.floor(base.min+Math.random()*(base.max-base.min+1));
+      const power=Math.floor(rawPower*(1+currentRankIndex()*0.08));
+      const pet={id:'p'+Date.now()+Math.random().toString(36).slice(2,9),name:base.name,baseName:base.name,icon:base.icon,rarity:base.rarity,power,createdAt:Date.now(),fuseLevel:0};
+      state.pets.push(pet);opened.push(pet);
+      if(!Array.isArray(state.equippedPets))state.equippedPets=state.equippedPet?[state.equippedPet]:[];
+      if(state.equippedPets.length<3)state.equippedPets.push(pet.id);
+    }
+    state.equippedPet=state.equippedPets[0]||null;
+    eggOpening=false;if(count===1)showPetModal(opened[0]);else toast(`🥚 ${fmt(opened.length)} pet açıldı!`);checkAchievements();render();save();
+  },550);
+}
+
+function showPetModal(pet){
+  $('modalBody').innerHTML = `
+    <h2 style="text-align:center">Yeni Pet!</h2>
+    <div style="text-align:center;font-size:64px;margin:12px 0">${pet.icon}</div>
+    <div style="text-align:center;font-weight:900;font-size:18px">${pet.name}</div>
+    <div style="text-align:center" class="rarity-${pet.rarity}">${pet.rarity.toUpperCase()}</div>
+    <div style="text-align:center;margin-top:8px;color:var(--green);font-weight:800">+${pet.power}% güç</div>
+    <button class="click-btn" style="width:100%;margin-top:16px" onclick="closeModal()">Harika!</button>`;
+  $('modal').classList.add('show');
+}
+function closeModal(){ $('modal').classList.remove('show'); }
+const PET_RARITY_NAMES={common:'Common',uncommon:'Uncommon',rare:'Rare',epic:'Epic',legendary:'Legendary',mythic:'Mythic',secret:'Secret',celestial:'Celestial',divine:'Divine',eternal:'Eternal',infinite:'Infinite',nonillion:'Nonillion',vigintillion:'Vigintillion',unvigintillion:'Unvigintillion',duovigintillion:'Duovigintillion',tresvigintillion:'Tresvigintillion',quattuorvigintillion:'Quattuorvigintillion',quinvigintillion:'Quinvigintillion',sexvigintillion:'Sexvigintillion',septemvigintillion:'Septemvigintillion'};
+const PET_RARITY_VALUE={common:1,uncommon:1.25,rare:1.7,epic:2.4,legendary:3.5,mythic:5,secret:7.5,celestial:11,divine:16,eternal:24,infinite:36,nonillion:55,vigintillion:70,unvigintillion:90,duovigintillion:115,tresvigintillion:145,quattuorvigintillion:180,quinvigintillion:225,sexvigintillion:280,septemvigintillion:350};
+function petSellValue(p){
+  const rarityFactor=PET_RARITY_VALUE[p?.rarity]||1;
+  return Math.max(1,Math.floor(Math.max(0,Number(p?.power)||0)*Math.max(8,eggPrice()*0.018)*rarityFactor));
+}
+function showPetDetails(id){
+  const pet=state.pets.find(p=>p.id===id);
+  if(!pet)return;
+  const active=equippedPetIds().includes(id);
+  const rarity=PET_RARITY_NAMES[pet.rarity]||String(pet.rarity||'Bilinmiyor');
+  const sell=petSellValue(pet);
+  const created=pet.createdAt?new Date(pet.createdAt).toLocaleString('tr-TR'):'Kayıtlı pet';
+  $('modalBody').innerHTML=`
+    <h2 style="text-align:center">🐾 PET BİLGİLERİ</h2>
+    <div class="pet-detail-icon">${escapeHtml(pet.icon||'🐾')}</div>
+    <div class="pet-detail-name">${escapeHtml(pet.name||'İsimsiz Pet')}</div>
+    <div class="pet-detail-rarity rarity-${escapeHtml(pet.rarity||'common')}">${escapeHtml(rarity.toUpperCase())}</div>
+    <div class="pet-detail-grid">
+      <div class="pet-detail-stat"><small>GÜÇ</small><strong>+${fmt(pet.power)}%</strong></div>
+      <div class="pet-detail-stat"><small>DURUM</small><strong>${active?'⭐ Aktif takımda':'Koleksiyonda'}</strong></div>
+      <div class="pet-detail-stat"><small>SATIŞ DEĞERİ</small><strong>${fmt(sell)} R$</strong></div>
+      <div class="pet-detail-stat"><small>NADİRLİK</small><strong>${escapeHtml(rarity)}</strong></div>
+      <div class="pet-detail-stat"><small>PET NUMARASI</small><strong>${escapeHtml(String(state.pets.findIndex(x=>x.id===id)+1))} / ${state.pets.length}</strong></div>
+      <div class="pet-detail-stat"><small>PET KİMLİĞİ</small><strong style="font-size:9px">${escapeHtml(String(pet.id||'—'))}</strong></div>
+      <div class="pet-detail-stat" style="grid-column:1/-1"><small>ELDE EDİLME</small><strong>${escapeHtml(created)}</strong></div>
+    </div>
+    <div class="pet-detail-actions">
+      <button class="equip" onclick="equipPetFromDetails('${String(pet.id).replace(/[^a-zA-Z0-9_-]/g,'')}')">${active?'TAKIMDAN ÇIKAR':'TAKIMA EKLE'}</button>
+      <button class="sell" onclick="sellPetFromDetails('${String(pet.id).replace(/[^a-zA-Z0-9_-]/g,'')}')">💰 ${fmt(sell)} R$ · SAT</button>
+    </div>
+    <button class="mini-btn" style="width:100%;margin-top:9px" onclick="closeModal()">KAPAT</button>`;
+  $('modal').classList.add('show');
+}
+async function equipPetFromDetails(id){
+  closeModal();
+  await equipPet(id);
+}
+async function sellPet(id){
+  const pet=state.pets.find(p=>p.id===id);
+  if(!pet)return toast('Pet bulunamadı.');
+  const value=petSellValue(pet);
+  const active=equippedPetIds().includes(id);
+  if(!confirm(`${pet.name} adlı peti ${fmt(value)} R$ karşılığında satmak istiyor musun?${active?'\nAktif takımından da çıkarılacak.':''}`))return;
+  if(mode==='cloud'){
+    try{
+      const result=await gameApi('sellPet',{petId:id});
+      applyServerProfile(result.profile);
+      playSound('buy');
+      closeModal();
+      render();
+      toast(`${pet.name} satıldı! +${fmt(result.gain??value)} R$`);
+    }catch(err){toast(err.message||'Pet satılamadı.');}
+    return;
+  }
+  state.pets=state.pets.filter(p=>p.id!==id);
+  state.equippedPets=equippedPetIds().filter(x=>x!==id);
+  state.equippedPet=state.equippedPets[0]||null;
+  add(value);
+  playSound('buy');
+  closeModal();
+  render();
+  save();
+  toast(`${pet.name} satıldı! +${fmt(value)} R$`);
+}
+function sellPetFromDetails(id){sellPet(id);}
+window.equipPetFromDetails=equipPetFromDetails;
+window.sellPetFromDetails=sellPetFromDetails;
+
+window.closeModal = closeModal;
+async function equipPet(id){
+  if(mode==='cloud'){
+    try{const result=await gameApi('equipPet',{petId:id});applyServerProfile(result.profile);render();toast('Pet takımı güncellendi!');}
+    catch(err){toast(err.message||'Pet değiştirilemedi.');}
+    return;
+  }
+  if(!Array.isArray(state.equippedPets))state.equippedPets=state.equippedPet?[state.equippedPet]:[];
+  if(state.equippedPets.includes(id)){state.equippedPets=state.equippedPets.filter(x=>x!==id);toast('Pet takımdan çıkarıldı.');}
+  else if(state.equippedPets.length<3){state.equippedPets.push(id);toast('Pet takımına eklendi!');}
+  else{toast('En fazla 3 pet donatabilirsin. Önce birini çıkar.');return;}
+  state.equippedPet=state.equippedPets[0]||null;render();save();
+}
+async function claimQuest(){
+  if(mode==='cloud'){
+    try{await flushPendingCloudClicks();const result=await gameApi('claimQuest');applyServerProfile(result.profile);playSound('level');render();toast('Günlük görev tamam! +'+fmt(result.gain??520)+' R$ 🎉');}
+    catch(err){toast(err.message||'Görev ödülü alınamadı.');}
+    return;
+  }
+  if(Number(state.questProgress)>=50&&!state.questClaimed){
+    const reward=dailyQuestReward();state.questClaimed=true;add(reward);playSound('level');render();
+    await save(true);toast('Günlük görev tamam! +'+fmt(reward)+' R$ 🎉');
+  }
+}
+async function claimDaily(){
+  if(mode==='cloud'){
+    try{await flushPendingCloudClicks();const result=await gameApi('claimDaily');applyServerProfile(result.profile);playSound('level');render();toast('Günlük ödül! +'+fmt(result.gain||0)+' R$');}
+    catch(err){toast(err.message||'Günlük ödül alınamadı.');}
+    return;
+  }
+  const now = Date.now();
+  const day = 86400000;
+  if(now - state.dailyLast < day*0.9) return toast('Yarın tekrar gel!');
+  const streak = (now - state.dailyLast < day*1.5) ? state.dailyStreak+1 : 1;
+  state.dailyStreak = Math.min(streak,30);
+  state.dailyLast = now;
+  const reward = Math.max(200 + state.dailyStreak*50 + state.level*15,Math.floor(clickPower()*18+autoPower()*45));
+  add(reward);
+  toast(`Günlük ödül! +${fmt(reward)} R$ (Seri: ${state.dailyStreak})`);
+  playSound('level');
+  render(); save();
+}
+async function doRebirth(){
+  if(mode==='cloud'){try{await flushPendingCloudClicks();}catch(err){return toast(err.message||'Önce tıklamalar kaydedilmeli.');}}
+  const need = rebirthNeed();
+  if(state.money < need) return toast('Yeterli Robux yok!');
+  if(!confirm(`Rebirth yapılsın mı?\n\n${fmt(need)} R$ harcanacak.\nYükseltmeler ve bakiye sıfırlanır.\n+%5 kalıcı gelir bonusu kazanırsın. Her rebirth çarpana eklenir; sınır yok.\nPetler ve başarımlar korunur.`)) return;
+  if(mode==='cloud'){
+    try{const result=await gameApi('rebirth');applyServerProfile(result.profile);playSound('rebirth');render();toast(`♻️ Rebirth #${state.rebirths}!`);}
+    catch(err){toast(err.message||'Rebirth yapılamadı.');}
+    return;
+  }
+  state.rebirths++;
+  state.money = 0;
+  state.owned = {};
+  state.multi = 1;
+  state.questProgress = 0;
+  state.questClaimed = false;
+  playSound('rebirth');
+  toast(`♻️ Rebirth #${state.rebirths}! Çarpan: ×${rebirthMultiplier().toFixed(2)}`);
+  checkAchievements();
+  render(); save();
+}
+function rebirthNeed(){ return Math.floor(10000 * Math.pow(2.2, state.rebirths)); }
+function checkAchievements(){
+  if(mode==='cloud')return;
+  ACHIEVEMENTS.forEach(a=>{
+    if(!state.achievements[a.id] && a.check(state)){
+      state.achievements[a.id] = true;
+      const reward=Math.max(a.reward,Math.floor(clickPower()*10+autoPower()*15));
+      add(reward, false);
+      toast(`🏅 ${a.name}! +${fmt(reward)} R$`);
+      playSound('level');
+    }
+  });
+}
+// ========== RENDER ==========
+let shopStructureKey='';
+function renderShop(force=false){
+  const list=ITEMS.filter(x=>activeTab==='all'||x.tab===activeTab);
+  const rank=currentRankIndex();
+  const structureKey=activeTab+'|'+rank+'|'+state.multi+'|'+list.map(it=>it.id+':'+count(it.id)).join(',');
+  const root=$('shop');
+  // Yalnızca sekme/rütbe/sahiplik değiştiğinde kartları yeniden oluştur.
+  if(force||structureKey!==shopStructureKey){
+    root.innerHTML=list.map(it=>{
+      const owned=count(it.id),locked=(it.unlockRank||0)>rank;
+      return `<article class="item ${locked?'rank-locked':''}" data-item-card="${it.id}">
+        <div class="item-top"><div class="item-icon">${it.icon}</div><span class="owned">${owned?`×${fmt(owned)}`:'YENİ'}</span></div>
+        <span class="item-rank ${locked?'':'unlocked'}">${locked?'🔒': '✓'} ${locked?`RÜTBE ${it.unlockRank}`:'KULLANILABİLİR'}</span>
+        <h3>${it.name}</h3><p>${it.desc}</p>
+        <button class="buy" data-buy="${it.id}" type="button"></button>
+      </article>`;
+    }).join('');
+    root.querySelectorAll('[data-buy]').forEach(button=>button.addEventListener('click',()=>buy(button.dataset.buy)));
+    shopStructureKey=structureKey;
+  }
+  // Bakiye değiştiğinde yalnızca satın alma düğmelerini güncelle; 100 kartı baştan çizme.
+  for(const it of list){
+    const button=root.querySelector(`[data-buy="${it.id}"]`);
+    if(!button)continue;
+    const card=button.closest('.item');
+    const locked=(it.unlockRank||0)>rank;
+    const capped=it.type==='multi'&&state.multi>=MAX_PURCHASE_MULTIPLIER;
+    const cost=costOf(it);
+    const affordable=!locked&&!capped&&state.money>=cost;
+    button.disabled=locked||capped||!affordable;
+    button.classList.toggle('locked',locked||capped);
+    button.classList.toggle('affordable',affordable);
+    button.textContent=locked?`🔒 ${RANKS[it.unlockRank].name} gerekli`:(capped?'✓ GÜÇ TAVANI':`🟡 ${fmt(cost)} R$ · SATIN AL`);
+    const rankLabel=card.querySelector('.item-rank');
+    if(rankLabel){
+      rankLabel.textContent=locked?`🔒 RÜTBE ${it.unlockRank}`:(capped?'MAX · ÇARPAN SINIRI':'✓ KULLANILABİLİR');
+      rankLabel.classList.toggle('unlocked',!locked&&!capped);
+    }
+  }
+  const purchased=ITEMS.reduce((sum,item)=>sum+count(item.id),0);
+  $('shopCount').textContent=`${ITEMS.length} çeşit · ${fmt(purchased)} satın alındı`;
+}
+
+function renderPets(){
+  $('eggCost').textContent = fmt(eggPrice());
+  $('eggTitle').textContent = eggTierName().toUpperCase();
+  $('petCount').textContent = state.pets.length+' pet';
+  fuseSelection=fuseSelection.filter(id=>state.pets.some(p=>String(p.id)===String(id)));
+  updateEggQuantityUI();
+  refreshFuseButton();
+  const ids=equippedPetIds();
+  $('petSlotsLabel').textContent=ids.length+' / 3';
+  $('equippedSlots').innerHTML=[0,1,2].map(i=>{
+    const p=state.pets.find(x=>x.id===ids[i]);
+    return p?`<div class="equipped-slot filled" data-slot-pet="${escapeHtml(p.id)}"><div class="slot-icon">${escapeHtml(p.icon)}</div><strong>${escapeHtml(p.name)}</strong><span>+${fmt(p.power)}% GÜÇ</span></div>`:
+      `<div class="equipped-slot"><div class="slot-icon">＋</div><strong>Boş slot ${i+1}</strong><span>PET SEÇ</span></div>`;
+  }).join('');
+  if(!state.pets.length){
+    $('petGrid').innerHTML='<p style="color:var(--muted);font-size:12px;grid-column:1/-1;text-align:center;padding:20px">Henüz petin yok. İlk yumurtanı aç ve takımını kur!</p>';
+    return;
+  }
+  const sorted=[...state.pets].sort((a,b)=>(b.power-a.power));
+  const rarityNames={common:'COMMON',uncommon:'UNCOMMON',rare:'RARE',epic:'EPIC',legendary:'LEGENDARY',mythic:'MYTHIC',secret:'SECRET',celestial:'CELESTIAL',divine:'DIVINE',eternal:'ETERNAL',infinite:'INFINITE',nonillion:'NONILLION',vigintillion:'VIGINTILLION',unvigintillion:'UNVIGINTILLION',duovigintillion:'DUOVIGINTILLION',tresvigintillion:'TRESVIGINTILLION',quattuorvigintillion:'QUATTUORVIGINTILLION',quinvigintillion:'QUINVIGINTILLION',sexvigintillion:'SEXVIGINTILLION',septemvigintillion:'SEPTEMVIGINTILLION'};
+  $('petGrid').innerHTML=sorted.map(p=>{
+    const active=ids.includes(p.id);
+    return `<div class="pet-card ${active?'equipped':''}" data-pet="${escapeHtml(p.id)}">
+      <div class="pet-icon">${escapeHtml(p.icon)}</div>
+      <div class="pet-name">${escapeHtml(p.name)}</div>
+      <div class="pet-rarity rarity-${p.rarity}">${rarityNames[p.rarity]||String(p.rarity).toUpperCase()}</div>
+      <div class="pet-power">+${fmt(p.power)}% güç</div><label style="display:flex;gap:5px;justify-content:center;align-items:center;margin-top:7px;font-size:10px;cursor:pointer"><input type="checkbox" data-fuse-pet="${escapeHtml(p.id)}" ${fuseSelection.includes(String(p.id))?'checked':''} style="accent-color:#a78bfa"> Fuse için seç</label>
+      <div class="pet-card-actions">
+        <button type="button" data-pet-info="${escapeHtml(p.id)}">BİLGİLER</button>
+        <button type="button" class="sell" data-pet-sell="${escapeHtml(p.id)}">SAT · ${fmt(petSellValue(p))}</button>
+      </div>
+      <span class="pet-action">${active?'AKTİF PET':'DETAYLARI GÖR'}</span>
+    </div>`;
+  }).join('');
+  $('petGrid').querySelectorAll('[data-pet-info]').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();showPetDetails(el.dataset.petInfo);}));
+  $('petGrid').querySelectorAll('[data-pet-sell]').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();sellPet(el.dataset.petSell);}));
+  $('petGrid').querySelectorAll('.pet-card').forEach(el=>el.addEventListener('click',e=>{if(e.target.closest('input,label,button'))return;showPetDetails(el.dataset.pet);}));
+  $('equippedSlots').querySelectorAll('[data-slot-pet]').forEach(el=>el.addEventListener('click',()=>showPetDetails(el.dataset.slotPet)));
+}
+function renderRankAtlas(){
+  const active=currentRankIndex();
+  $('rankAtlasCount').textContent=(active+1)+' / '+RANKS.length+' açıldı';
+  $('rankAtlas').innerHTML=RANKS.map((rank,index)=>{
+    const unlocked=index<=active, current=index===active;
+    const required=index===0?'Başlangıç':fmt(rank.value)+' R$';
+    return `<article class="rank-atlas-item ${unlocked?'unlocked':'locked'} ${current?'current':''}" style="--rank-color:${rank.color}">
+      <div class="rank-atlas-top"><span class="rank-atlas-icon">${rank.icon}</span><strong class="rank-atlas-name">${rank.name}</strong></div>
+      <div class="rank-atlas-value">${required}</div>
+      <div class="rank-atlas-perk">${rank.perk.description}</div>
+      <div class="rank-atlas-status">${current?'★ ŞU ANKİ RÜTBE':(unlocked?'✓ AÇILDI':'🔒 KİLİTLİ')}</div>
+    </article>`;
+  }).join('');
+}
+function renderAch(){
+  $('achGrid').innerHTML = ACHIEVEMENTS.map(a=>{
+    const done = !!state.achievements[a.id];
+    return `<div class="ach ${done?'done':''}">
+      <div class="ach-icon">${done?'✅':'🔒'}</div>
+      <div class="ach-info"><strong>${a.name}</strong><span>${a.desc} · Ödül: ${fmt(a.reward)} R$</span></div>
+    </div>`;
+  }).join('');
+  const canDaily = Date.now() - state.dailyLast > 86400000*0.9;
+  $('dailyBtn').disabled = !canDaily;
+  $('dailyBtn').textContent = canDaily ? 'Ödülü Al' : 'Yarın gel';
+  $('dailyDesc').textContent = `Seri: ${state.dailyStreak} gün · Ödül artar!`;
+  renderRankAtlas();
+}
+function renderLB(rows=leaderboardData){
+  const list=$('lbList');
+  if(mode!=='cloud'||!currentUser){
+    $('lbLivePill').textContent='BULUT GİRİŞİ GEREKLİ';
+    $('lbStatus').textContent='Canlı sıralamaya katılmak için Bulut Mod ile giriş yap.';
+    list.innerHTML='';
+    return;
+  }
+  if(!state.settings.leaderboard){
+    $('lbLivePill').textContent='GİZLİ';
+    $('lbStatus').textContent='Liderlik tablosunda görünmüyorsun. Ayarlar bölümünden görünürlüğü açabilirsin.';
+    list.innerHTML='';
+    return;
+  }
+  $('lbLivePill').textContent='● CANLI';
+  if(!rows || rows.length===0){
+    $('lbStatus').textContent='Henüz sıralamaya katılan oyuncu yok. İlk oyuncu sen ol!';
+    list.innerHTML='';
+    return;
+  }
+  $('lbStatus').textContent='Gerçek oyuncular · İlk '+rows.length+' · Anlık güncellenir';
+  const safeRows=rows.slice().sort((a,b)=>(Number(b.totalEarned)||0)-(Number(a.totalEarned)||0));
+  const meInTop=safeRows.some(p=>p.id===currentUser.uid);
+  let html=safeRows.map((p,i)=>`<li class="${p.id===currentUser.uid?'me':''}">
+    <span><span class="lb-rank">#${i+1}</span> ${p.id===currentUser.uid?'⭐ ':''}${escapeHtml(cleanDisplayName(p.displayName||'Oyuncu'))}</span>
+    <strong>${fmt(Math.max(0,Number(p.totalEarned)||0))} R$ <small style="color:var(--muted);font-weight:500">· Lv.${Math.max(1,Number(p.level)||1)}</small></strong>
+  </li>`).join('');
+  if(!meInTop){
+    html+=`<li class="me"><span><span class="lb-rank">—</span> ⭐ ${escapeHtml(cleanDisplayName(state.displayName||currentUser.displayName||'Sen'))} <small>(ilk ${safeRows.length} dışında)</small></span><strong>${fmt(state.total)} R$</strong></li>`;
+  }
+  list.innerHTML=html;
+}
+function startLeaderboard(){
+  if(leaderboardUnsub){leaderboardUnsub();leaderboardUnsub=null;}
+  if(mode!=='cloud'||!currentUser){renderLB([]);return;}
+  $('lbLivePill').textContent='BAĞLANIYOR';
+  let stopped=false;
+  const refresh=async()=>{
+    if(stopped||mode!=='cloud'||!currentUser)return;
+    try{
+      const result=await gameApi('leaderboard');
+      if(stopped)return;
+      leaderboardData=Array.isArray(result.rows)?result.rows:[];
+      renderLB(leaderboardData);
+    }catch(err){
+      console.error('Supabase leaderboard failed',err);
+      $('lbLivePill').textContent='BAĞLANTI HATASI';
+      $('lbStatus').textContent='Liderlik tablosu alınamadı. Supabase Edge Function bağlantısını kontrol et.';
+      $('lbList').innerHTML='';
+    }
+  };
+  refresh();
+  const timer=setInterval(refresh,60000);
+  leaderboardUnsub=()=>{stopped=true;clearInterval(timer);};
+}
+function render(){
+  $('balance').innerHTML = fmt(state.money)+' <span>R$</span>';
+  $('rate').textContent = '+'+fmt(clickPower())+' R$ / tık';
+  $('autoRate').textContent = '+'+fmt(autoPower())+' R$ / sn';
+  $('clicks').textContent = fmt(state.clicks);
+  $('perSec').textContent = fmt(autoPower());
+  $('best').textContent = fmt(state.best);
+  $('upgrades').textContent = ITEMS.reduce((s,x)=>s+count(x.id),0);
+  $('totalEarned').textContent = fmt(state.total);
+  $('petPower').textContent = Math.round(petBonus()*100)+'%';
+  $('lvlPill').textContent = 'Lv.'+state.level;
+  $('rbPill').textContent = state.rebirths+' Rebirth';
+  const q = state.questProgress;
+  $('questCount').textContent = q+' / 50';
+  $('questBar').style.width = (q/50*100)+'%';
+  $('questBtn').disabled = state.questClaimed || q<50;
+  $('questBtn').textContent = state.questClaimed ? '✓ Alındı' : 'ÖDÜLÜ AL · '+fmt(dailyQuestReward())+' R$';
+  $('questDesc').textContent = state.questClaimed ? 'Yarın yeni görev!' : '50 kez tıkla ve bonus kap!';
+  const rankIdx=currentRankIndex();
+  const rank=RANKS[rankIdx];
+  const nextR=RANKS[rankIdx+1];
+  $('rank').textContent=rank.icon+' '+rank.name;
+  $('rankUnitBadge').textContent=rank.unit.toUpperCase();
+  $('rankPerk').textContent=`Kalıcı rütbe çarpanı ×${fmt(rankMultiplier())} · Bu rütbenin ödülü: ${rank.perk.description}`;
+  if(nextR){
+    const left=Math.max(0,nextR.value-state.total);
+    $('rankText').textContent=fmt(left)+' R$ daha → '+nextR.name;
+    $('rankBar').style.width=Math.min(100,((state.total-rank.value)/(nextR.value-rank.value))*100)+'%';
+  }else{
+    $('rankText').textContent='SON RÜTBE AÇILDI! Kasanda 1 Tresvigintilyon R$ tutarak oyunu bitir. 🏆';
+    $('rankBar').style.width='100%';
+  }
+  const finalProgress=Math.min(100,(state.money/GAME_FINISH_VALUE)*100);
+  $('finalGoalBar').style.width=finalProgress+'%';
+  $('finalGoalText').textContent=state.money>=GAME_FINISH_VALUE?'🎉 Hedef tamamlandı! Kasanda en az 1 Tresvigintilyon R$ var.':`Kasanda ${fmt(state.money)} / 1 Tresvigintilyon R$ · ${finalProgress.toFixed(6).replace('.',',')}% tamamlandı.`;
+  applyRankTheme(rankIdx);
+  applyGameTheme();
+  updateBonusUI();
+  if(rankIdx>=(state.rankAnnounced||0)){
+    if(rankIdx>(state.rankAnnounced||0)){
+      state.rankAnnounced=rankIdx;
+      toast(`${rank.icon} Yeni rütbe: ${rank.name}! Özel yetenek açıldı.`);
+    }
+  }
+  const need = xpNeeded();
+  $('xpText').textContent = fmt(state.xp)+' / '+fmt(need)+' XP';
+  $('xpBar').style.width = Math.min(100, state.xp/need*100)+'%';
+  const needRb = rebirthNeed();
+  $('rbNeed').textContent = fmt(needRb);
+  $('rbMult').textContent = '×'+rebirthMultiplier().toFixed(2)+' Çarpan';
+  $('rebirthBtn').disabled = state.money < needRb;
+  if($('sec-shop').classList.contains('active')) renderShop();
+  if($('sec-pets').classList.contains('active')) renderPets();
+  if($('sec-quests').classList.contains('active')) renderAch();
+  if($('sec-rebirth').classList.contains('active')) renderLB();
+  if(state.money>=GAME_FINISH_VALUE&&!state.gameCompleted){
+    state.gameCompleted=true;
+    $('modalBody').innerHTML=`<h2 style="text-align:center">TRESVİGİNTİLYON BAŞARISI!</h2><div class="victory-mark">🏆</div><p class="victory-sub">Tebrikler! Kasanda en az <strong>1 Tresvigintilyon R$</strong> biriktirdin ve Robux Clicker X'i tamamladın. Artık Tresvigintilyon Tanrısı rütbesindesin.</p><button class="click-btn" style="width:100%;margin-top:16px" onclick="closeModal()">EFSANE! 🎉</button>`;
+    $('modal').classList.add('show');
+    playSound('rebirth');
+    Promise.resolve(save(true)).catch(()=>{});
+  }
+}
+// ========== NAV & TABS ==========
+$$('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    $$('.nav-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    $$('.panel-section').forEach(s=>s.classList.remove('active'));
+    const sec = $('sec-'+btn.dataset.sec);
+    if(sec) sec.classList.add('active');
+    if(btn.dataset.sec==='shop') renderShop();
+    if(btn.dataset.sec==='pets') renderPets();
+    if(btn.dataset.sec==='quests') renderAch();
+    if(btn.dataset.sec==='rebirth') renderLB();
+    if(btn.dataset.sec==='customize'){applyClickObject();updateMusicUI();}
+  });
+});
+$$('#shopTabs .tab').forEach(b=>{
+  b.addEventListener('click',()=>{
+    $$('#shopTabs .tab').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    activeTab = b.dataset.tab;
+    renderShop();
+  });
+});
+// ========== EVENTS ==========
+bindCustomizationControls();
+$('authPassword').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth();});
+$('authEmail').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth();});
+document.addEventListener('pointerdown',()=>{if(mode&&customization.musicEnabled&&!musicStarted&&!musicPaused)startMusic();},{passive:true});
+$('orb').addEventListener('click', doClick);
+$('clickBtn').addEventListener('click', doClick);
+$('goldenRobux').addEventListener('click',collectGoldenRobux);
+function fusionBaseName(p){
+  return String(p?.baseName||p?.name||'Pet').replace(/^(?:(?:Gelişmiş)(?:\s+Seviye\s+\d+)?\s+)+/i,'').trim();
+}
+function fusionLevel(p){return Math.max(0,Math.floor(Number(p?.fuseLevel)||((p?.fused)?1:0)));}
+function fusionKey(p){return `${fusionBaseName(p)}|${p?.rarity||'common'}|${fusionLevel(p)}`;}
+function refreshFuseButton(){
+  const selected=fuseSelection.map(id=>state.pets.find(p=>String(p.id)===String(id)));
+  const allMatch=fuseSelection.length===3&&selected.every(Boolean)&&new Set(selected.map(fusionKey)).size===1;
+  $('fuseSelectedCount').textContent=`${fuseSelection.length} / 3`;
+  $('fusePetsBtn').disabled=!allMatch;
+  $('fuseStatus').textContent=fuseSelection.length<3
+    ?`${3-fuseSelection.length} pet daha seç. Aynı tür, nadirlik ve geliştirme seviyesi olmalı.`
+    :allMatch?'Hazır! Üç pet birleşince daha güçlü tek bir pet olacak.':'Seçtiklerin aynı pet türü, nadirliği ve geliştirme seviyesinde değil. Seçimi düzelt.';
+}
+document.querySelectorAll('[data-egg-count]').forEach(btn=>btn.addEventListener('click',()=>{
+  $('eggCountInput').value=String(Number(btn.dataset.eggCount));updateEggQuantityUI();
+}));
+$('eggCountInput').addEventListener('input',updateEggQuantityUI);
+$('eggCountInput').addEventListener('change',()=>{
+  const input=$('eggCountInput');let n=Number(input.value);
+  if(!Number.isFinite(n)||!Number.isInteger(n)||n<1)n=1;
+  input.value=String(Math.min(MAX_EGGS_PER_OPEN,n));updateEggQuantityUI();
+});
+$('eggMaxBtn').addEventListener('click',()=>{
+  const max=Math.max(1,Math.min(MAX_EGGS_PER_OPEN,Math.floor((Number(state.money)||0)/eggPrice())));
+  $('eggCountInput').value=String(max);updateEggQuantityUI();
+});
+$('openEggBtn').addEventListener('click',()=>openEgg(Number($('eggCountInput').value)));
+document.addEventListener('change',e=>{
+  const cb=e.target.closest?.('[data-fuse-pet]');if(!cb)return;
+  const id=String(cb.dataset.fusePet);
+  if(cb.checked){
+    if(fuseSelection.length>=3){cb.checked=false;return toast('En fazla 3 pet seçebilirsin.');}
+    if(!fuseSelection.includes(id))fuseSelection.push(id);
+  }else fuseSelection=fuseSelection.filter(x=>x!==id);
+  refreshFuseButton();
+});
+$('fusePetsBtn').addEventListener('click',async()=>{
+  const chosen=fuseSelection.map(id=>state.pets.find(p=>String(p.id)===String(id)));
+  if(fuseSelection.length!==3||chosen.some(p=>!p)||new Set(chosen.map(fusionKey)).size!==1)return toast('Aynı tür, nadirlik ve geliştirme seviyesinde 3 pet seçmelisin.');
+  try{
+    if(mode==='cloud'){
+      await flushPendingCloudClicks();
+      const r=await gameApi('fusePet',{petIds:fuseSelection});
+      applyServerProfile(r.profile);
+      toast('🧬 '+(r.pet?.name||'Geliştirilmiş pet')+' oluşturuldu!');
+    }else{
+      const baseName=fusionBaseName(chosen[0]);
+      const nextLevel=Math.max(...chosen.map(fusionLevel))+1;
+      const fused={...chosen[0],id:'f'+Date.now()+Math.random().toString(36).slice(2,8),baseName,
+        fuseLevel:nextLevel,name:nextLevel===1?`Gelişmiş ${baseName}`:`Gelişmiş Seviye ${nextLevel} ${baseName}`,
+        power:Math.floor(chosen.reduce((sum,p)=>sum+(Number(p.power)||0),0)*1.35),
+        rarity:chosen[0].rarity,createdAt:Date.now(),fused:true};
+      const ids=new Set(fuseSelection.map(String));
+      state.pets=state.pets.filter(p=>!ids.has(String(p.id)));state.pets.push(fused);
+      state.equippedPets=(state.equippedPets||[]).filter(id=>!ids.has(String(id)));
+      if(state.equippedPets.length<3)state.equippedPets.push(fused.id);
+      state.equippedPet=state.equippedPets[0]||null;
+      save();toast('🧬 '+fused.name+' oluşturuldu!');
+    }
+    fuseSelection=[];render();refreshFuseButton();
+  }catch(err){toast(err.message||'Fuse işlemi başarısız.');}
+});
+$('egg').addEventListener('click',()=>openEgg($('eggCountInput').value));
+$('questBtn').addEventListener('click', claimQuest);
+$('dailyBtn').addEventListener('click', claimDaily);
+$('rebirthBtn').addEventListener('click', doRebirth);
+$('modalClose').addEventListener('click', closeModal);
+$('modal').addEventListener('click', e=>{ if(e.target===$('modal')) closeModal(); });
+function syncSettingsToggles(){
+  ['Sound','Particles','Crit','Save','Leaderboard'].forEach(name=>{
+    const key=name.toLowerCase(),el=$('tog'+name);
+    if(el)el.classList.toggle('on',!!state.settings[key]);
+  });
+}
+syncSettingsToggles();
+$('themeSelect').addEventListener('change',()=>{state.settings.theme=$('themeSelect').value;applyGameTheme();save();toast('Görünüm değiştirildi!');});
+['Sound','Particles','Crit','Save','Leaderboard'].forEach(name=>{
+  const key=name.toLowerCase(),el=$('tog'+name);
+  if(!el)return;
+  el.addEventListener('click',()=>{
+    state.settings[key]=!state.settings[key];
+    el.classList.toggle('on',state.settings[key]);
+    if(key==='leaderboard'){
+      renderLB(leaderboardData);
+      save(true).catch(()=>{});
+    }else save();
+  });
+});
+$('resetBtn').addEventListener('click',async()=>{
+  if(!confirm('TÜM ilerleme silinsin mi? Bu geri alınamaz!'))return;
+  if(mode==='cloud'){
+    try{await flushPendingCloudClicks();const result=await gameApi('reset');applyServerProfile(result.profile);$('profileNameInput').value=state.displayName;render();toast('Bulut oyunun sıfırlandı.');}
+    catch(err){toast(err.message||'Bulut profili sıfırlanamadı.');}
+    return;
+  }
+  localStorage.removeItem('robuxClickerPro');
+  const savedName=state.displayName||currentUser?.displayName||'Oyuncu';
+  state=defaultState();state.displayName=savedName;
+  $('profileNameInput').value=savedName;syncSettingsToggles();render();toast('Oyun sıfırlandı.');
+});
+/* Yedek kodu içe/dışa aktarma kaldırıldı: yerel kodlarla bakiye değiştirilmesini önlemek için. */
+
+/* ===== Mode / Auth ===== */
+function startLocal(){
+  mode='local';
+  try {
+    const raw = localStorage.getItem('robuxClickerPro');
+    if(raw){
+      const s = JSON.parse(raw);
+      state = {...defaultState(),...s, owned:s.owned||{}, pets:s.pets||[], achievements:s.achievements||{}, settings:{...defaultState().settings,...(s.settings||{})}, equippedPets:Array.isArray(s.equippedPets)?s.equippedPets.slice(0,3):(s.equippedPet?[s.equippedPet]:[]), redeemed:s.redeemed||[]};
+      migrateBalanceState(s);
+    }
+  } catch(e){}
+  // offline
+  (function(){
+    const now = Date.now();
+    const diff = Math.min(now - (state.lastSave||now), 1000*60*60*12);
+    if(diff > 30000){
+      const sec = Math.floor(diff/1000);
+      const offlineRaw = autoPower() * sec * offlineBonus() * 0.45;
+      const rankNow = currentRankIndex();
+      const nextRank = RANKS[rankNow+1];
+      const remaining = nextRank ? Math.max(0,nextRank.value-state.total) : Math.max(0,GAME_FINISH_VALUE-state.money);
+      const gain = Math.floor(Math.min(offlineRaw,remaining*0.12));
+      if(gain > 0){
+        add(gain, false);
+        $('offlineText').textContent = `Çevrimdışı ${Math.floor(sec/60)} dk · +${fmt(gain)} R$ kazandın!`;
+        $('offlineBanner').classList.add('show');
+        setTimeout(()=>$('offlineBanner').classList.remove('show'), 8000);
+      }
+    }
+    state.lastSave = now;
+  })();
+  $('modePill').textContent='YEREL';
+  syncSettingsToggles();
+  enterGame();
+}
+function showAuth(){
+  if(!firebaseReady||!auth){toast('Firebase giriş bağlantısı kurulamadı. Yerel Mod kullanılabilir.');return;}
+  mode='cloud';
+  authMode='login';
+  $('authTitle').textContent='Bulut Girişi';
+  $('authBtn').textContent='Giriş Yap';
+  $('authSwitch').textContent='Hesap Oluştur';
+  $('authUsername').classList.add('hidden');
+  $('resetPassLink').classList.remove('hidden');
+  $('authErr').textContent='';
+  $('modeOverlay').classList.add('hidden');
+  $('authOverlay').classList.remove('hidden');
+}
+function backMode(){
+  $('authOverlay').classList.add('hidden');
+  $('modeOverlay').classList.remove('hidden');
+  $('authErr').textContent='';
+  mode=null;
+}
+function toggleAuth(){
+  authMode=authMode==='login'?'register':'login';
+  const registering=authMode==='register';
+  $('authTitle').textContent=registering?'Hesap Oluştur':'Bulut Girişi';
+  $('authBtn').textContent=registering?'Kayıt Ol':'Giriş Yap';
+  $('authSwitch').textContent=registering?'Giriş Yap':'Hesap Oluştur';
+  $('authUsername').classList.toggle('hidden',!registering);
+  $('resetPassLink').classList.toggle('hidden',registering);
+  $('authPassword').autocomplete=registering?'new-password':'current-password';
+  $('authErr').textContent='';
+}
+function cleanDisplayName(value){
+  const name=String(value||'Oyuncu').trim().replace(/[^\p{L}\p{N}_ -]/gu,'').slice(0,18);
+  return name.length>=3?name:'Oyuncu';
+}
+function escapeHtml(value){
+  return String(value??'').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
+}
+function authErrorMessage(err){
+  const map={
+    'auth/invalid-email':'E-posta adresi geçersiz.',
+    'auth/user-not-found':'Bu e-posta ile kayıtlı hesap bulunamadı.',
+    'auth/wrong-password':'Şifre yanlış.',
+    'auth/invalid-credential':'E-posta veya şifre hatalı.',
+    'auth/invalid-login-credentials':'E-posta veya şifre hatalı.',
+    'auth/email-already-in-use':'Bu e-posta zaten kullanılıyor. Giriş yapmayı dene.',
+    'auth/weak-password':'Şifre yeterince güçlü değil. En az 8 karakter kullan.',
+    'auth/user-disabled':'Bu hesap devre dışı bırakılmış.',
+    'auth/too-many-requests':'Çok fazla deneme yapıldı. Bir süre sonra tekrar dene.',
+    'auth/network-request-failed':'İnternet bağlantısı kurulamadı.',
+    'auth/operation-not-allowed':'Firebase Console’da E-posta/Şifre girişini etkinleştir.',
+    'auth/unauthorized-domain':'Bu site alan adı Firebase Authentication yetkili alanlarına eklenmeli.',
+    'permission-denied':'Firestore erişimi reddedildi. firestore.rules dosyasını Firebase Console’da yayımla.',
+    'failed-precondition':'Firebase veritabanı hazır değil veya bir kural/indeks eksik.',
+    'unavailable':'Firebase şu anda ulaşılamıyor. İnternet bağlantını kontrol et.',
+    'auth/username-taken':'Bu kullanıcı adı alınmış. Başka bir ad dene.'
+  };
+  return map[err.code]||'İşlem tamamlanamadı. Firebase ayarlarını ve güvenlik kurallarını kontrol et.';
+}
+async function resetPassword(){
+  if(!auth){$('authErr').textContent='Firebase bağlantısı yok.';return;}
+  const email=$('authEmail').value.trim().toLowerCase();
+  if(!email){$('authErr').textContent='Önce e-posta adresini yaz.';return;}
+  try{
+    await auth.sendPasswordResetEmail(email);
+    $('authErr').style.color='var(--green)';
+    $('authErr').textContent='Şifre yenileme bağlantısı e-posta adresine gönderildiyse gelen kutunu kontrol et.';
+  }catch(err){$('authErr').style.color='var(--red)';$('authErr').textContent=authErrorMessage(err);}
+}
+async function doAuth(){
+  if(!firebaseReady||!auth){$('authErr').textContent='Firebase giriş bağlantısı kurulamadı.';return;}
+  if(authBusy)return;
+  const email=$('authEmail').value.trim().toLowerCase();
+  const pass=$('authPassword').value;
+  const username=cleanDisplayName($('authUsername').value);
+  $('authErr').style.color='var(--red)';
+  $('authErr').textContent='';
+  if(!email||!pass){$('authErr').textContent='E-posta ve şifre gerekli.';return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){$('authErr').textContent='Geçerli bir e-posta yaz.';return;}
+  if(authMode==='register'){
+    if(!/^[\p{L}\p{N}_ -]{3,18}$/u.test($('authUsername').value.trim())){$('authErr').textContent='Kullanıcı adı 3–18 karakter olmalı.';return;}
+    if(pass.length<8){$('authErr').textContent='Şifre en az 8 karakter olmalı.';return;}
+  }
+  authBusy=true;
+  const oldText=$('authBtn').textContent;
+  $('authBtn').disabled=true;$('authSwitch').disabled=true;$('authBtn').textContent='Bağlanıyor…';
+  try{
+    await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+    let user;
+    if(authMode==='register'){
+      const cred=await auth.createUserWithEmailAndPassword(email,pass);
+      user=cred.user;
+      await user.updateProfile({displayName:username}).catch(()=>{});
+    }else{
+      const cred=await auth.signInWithEmailAndPassword(email,pass);
+      user=cred.user;
+    }
+    await activateCloud(user);
+  }catch(err){
+    $('authErr').textContent=(err?.message&&/Supabase|profil|sunucu|oturum/i.test(err.message))?err.message:authErrorMessage(err);
+    console.error('Authentication / Supabase bootstrap failed',err);
+  }finally{
+    authBusy=false;$('authBtn').disabled=false;$('authSwitch').disabled=false;$('authBtn').textContent=oldText;
+  }
+}
+async function activateCloud(user){
+  currentUser=user;
+  mode='cloud';
+  await loadCloud();
+  $('modePill').textContent='BULUT · GÜVENLİ';
+  render();
+  enterGame();
+  startLeaderboard();
+  lastCloudTick=0;
+  try{
+    const tick=await gameApi('tick');
+    applyServerProfile(tick.profile);
+    render();
+    if(Number(tick.gain)>0)toast('Çevrimdışı kazanç: +'+fmt(tick.gain)+' R$');
+  }catch(err){console.warn('Initial secure tick failed',err);}
+  scheduleGoldenRobux();
+}
+async function loadCloud(){
+  if(!currentUser)return;
+  const result=await gameApi('bootstrap',{displayName:currentUser.displayName||'Oyuncu'});
+  applyServerProfile(result.profile);
+  if(result.created)toast('Güvenli bulut profili oluşturuldu.');
+}
+function enterGame(){
+  $('modeOverlay').classList.add('hidden');
+  $('authOverlay').classList.add('hidden');
+  $('gameApp').classList.remove('hidden');
+  $('profileMode').textContent=mode==='cloud'?'BULUT HESABI':'YEREL PROFİL';
+  $('profileNameInput').value=state.displayName||currentUser?.displayName||'Oyuncu';
+  syncSettingsToggles();
+  checkAchievements();
+  applyGameTheme();
+  applyClickObject();
+  loadCustomizationAssets();
+  if(customization.musicEnabled&&customization.musicTrack!=='off')startMusic();
+  render();
+  if(mode==='local') save();
+  if(!goldenSpawnTimer&&!goldenVisible) scheduleGoldenRobux();
+}
+async function doLogout(){
+  stopMusic();
+  authBusy=true;
+  if(goldenSpawnTimer){clearTimeout(goldenSpawnTimer);goldenSpawnTimer=null;}
+  if(goldenExpireTimer){clearTimeout(goldenExpireTimer);goldenExpireTimer=null;}
+  goldenVisible=false;
+  $('goldenRobux').classList.add('hidden');
+  if(cloudSaveTimer){clearTimeout(cloudSaveTimer);cloudSaveTimer=null;}
+  if(mode==='cloud'&&currentUser){
+    try{await flushPendingCloudClicks();}catch(e){console.warn('Pending clicks failed',e);}
+    try{await persistCloud();}catch(e){console.warn('Final preferences save failed',e);}
+    if(leaderboardUnsub){leaderboardUnsub();leaderboardUnsub=null;}
+    try{await auth.signOut();}catch(e){console.warn(e);}
+  }
+  authBusy=false;
+  state=defaultState();leaderboardData=[];
+  currentUser=null;mode=null;
+  $('gameApp').classList.add('hidden');$('authOverlay').classList.add('hidden');$('modeOverlay').classList.remove('hidden');
+  $$('.nav-btn').forEach(b=>b.classList.remove('active'));$$('.nav-btn')[0].classList.add('active');
+  $$('.panel-section').forEach(sec=>sec.classList.remove('active'));$('sec-click').classList.add('active');
+}
+if(auth){
+  auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(err=>console.warn('Session persistence unavailable',err));
+  auth.onAuthStateChanged(async user=>{
+  // Restore a previous session; clear the UI when the account is signed out elsewhere.
+  if(authBusy)return;
+  if(user){
+    if(currentUser?.uid===user.uid)return;
+    try{await activateCloud(user);}catch(err){console.error('Session restore failed',err);currentUser=null;mode=null;$('gameApp').classList.add('hidden');$('modeOverlay').classList.remove('hidden');$('authOverlay').classList.add('hidden');toast('Oturum yüklenemedi. Supabase tablosu ve Edge Function dağıtımını kontrol et.');}
+  }else if(currentUser && mode==='cloud'){
+    if(leaderboardUnsub){leaderboardUnsub();leaderboardUnsub=null;}
+    currentUser=null;mode=null;state=defaultState();leaderboardData=[];
+    $('gameApp').classList.add('hidden');$('modeOverlay').classList.remove('hidden');
+  }
+  });
+}
+// Profile name editor (local profile or Firebase display name)
+$('saveProfileBtn').addEventListener('click',async()=>{
+  const raw=$('profileNameInput').value.trim();
+  if(!/^[\p{L}\p{N}_ -]{3,18}$/u.test(raw))return toast('Takma ad 3–18 karakter olmalı.');
+  const name=cleanDisplayName(raw);
+  try{
+    if(mode==='cloud'&&currentUser){
+      await currentUser.updateProfile({displayName:name});
+      state.displayName=name;
+    }else state.displayName=name;
+    $('profileNameInput').value=name;
+    renderLB(leaderboardData);
+    await save(true);
+    toast('Profil adı güncellendi!');
+  }catch(err){console.error(err);toast('Profil kaydedilemedi.');}
+});
+
+// Auto tick: local mode calculates locally; cloud mode asks the server every 10 seconds.
+setInterval(async()=>{
+  if(!mode)return;
+  if(mode==='local'){
+    const g=autoPower();
+    if(g>0){
+      add(g);
+      render();
+      save();
+    }else if(state.boostUntil){
+      if(Date.now()>=state.boostUntil){
+        state.boostUntil=0;
+        updateBonusUI();
+        save();
+      }else updateBonusUI();
+    }
+    return;
+  }
+  if(mode==='cloud'){
+    if(Date.now()-lastCloudTick>=10000){
+      lastCloudTick=Date.now();
+      try{const result=await gameApi('tick');applyServerProfile(result.profile);if(Number(result.gain)>0)render();}
+      catch(err){console.warn('Secure auto tick failed',err);}
+    }else if((state.boostUntil||0)>Date.now())updateBonusUI();
+  }
+},1000);
+</script>
+</body>
+</html>
 
