@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Game progress now lives in Supabase and is changed only by the Edge Function.
+    // Firebase is retained only for Authentication; browser access to Firestore is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
