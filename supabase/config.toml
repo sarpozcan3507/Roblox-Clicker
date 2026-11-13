@@ -1,0 +1,6 @@
+project_id = "pfzyxueduypesaqfwnrf"
+
+# This function authenticates Firebase ID tokens itself (Google Secure Token JWKS),
+# so Supabase's own JWT gate is disabled for this endpoint only.
+[functions.game-api]
+verify_jwt = false
