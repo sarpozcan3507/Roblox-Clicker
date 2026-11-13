@@ -1,0 +1,25 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "firestore.rules",
+      "supabase/**",
+      "functions/**",
+      "**/.*",
+      "**/node_modules/**",
+      "package.json",
+      "package-lock.json",
+      "set-admin.js",
+      "**/*firebase-adminsdk*.json",
+      "**/*service-account*.json",
+      "**/*.pem",
+      "**/*.key",
+      "**/.env*",
+      "README-KURULUM.txt"
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}
