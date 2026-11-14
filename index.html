@@ -2753,3 +2753,55 @@ if(auth){
       $('authErr').textContent='Kayıtlı bulut oturumu yüklenemedi. '+authErrorMessage(err);
     }
   }else if(currentUser && mode==='cloud'){
+    if(leaderboardUnsub){leaderboardUnsub();leaderboardUnsub=null;}
+    currentUser=null;mode=null;state=createDefaultGameState();leaderboardData=[];
+    $('gameApp').classList.add('hidden');$('modeOverlay').classList.remove('hidden');
+  }
+  });
+}
+// Profile name editor (local profile or Firebase display name)
+$('saveProfileBtn').addEventListener('click',async()=>{
+  const raw=$('profileNameInput').value.trim();
+  if(!/^[\p{L}\p{N}_ -]{3,18}$/u.test(raw))return toast('Takma ad 3–18 karakter olmalı.');
+  const name=cleanDisplayName(raw);
+  try{
+    if(mode==='cloud'&&currentUser){
+      await currentUser.updateProfile({displayName:name});
+      state.displayName=name;
+    }else state.displayName=name;
+    $('profileNameInput').value=name;
+    renderLB(leaderboardData);
+    await save(true);
+    toast('Profil adı güncellendi!');
+  }catch(err){console.error(err);toast('Profil kaydedilemedi.');}
+});
+
+// Auto tick: local mode calculates locally; cloud mode asks the server every 10 seconds.
+setInterval(async()=>{
+  if(!mode)return;
+  if(mode==='local'){
+    const g=autoPower();
+    if(g>0){
+      add(g);
+      render();
+      save();
+    }else if(state.boostUntil){
+      if(Date.now()>=state.boostUntil){
+        state.boostUntil=0;
+        updateBonusUI();
+        save();
+      }else updateBonusUI();
+    }
+    return;
+  }
+  if(mode==='cloud'){
+    if(Date.now()-lastCloudTick>=10000){
+      lastCloudTick=Date.now();
+      try{const result=await gameApi('tick');applyServerProfile(result.profile);if(Number(result.gain)>0)render();}
+      catch(err){console.warn('Secure auto tick failed',err);}
+    }else if((state.boostUntil||0)>Date.now())updateBonusUI();
+  }
+},1000);
+</script>
+</body>
+</html>
