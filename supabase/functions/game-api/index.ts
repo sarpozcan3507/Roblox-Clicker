@@ -375,9 +375,16 @@ function syncLeaderboardColumns(profile:any) {
 function errorResponse(err:unknown) {
   const e=err as any;
   const status=e instanceof ApiError?e.status:500;
-  const message=e instanceof ApiError?e.message:'Sunucu işlemi tamamlayamadı. Biraz sonra tekrar dene.';
-  if(!(e instanceof ApiError)) console.error('game-api error',err);
-  return new Response(JSON.stringify({error:message,code:e?.code||'server_error',rulesVersion:GAME_RULES.version,rulesFingerprint:GAME_RULES_FINGERPRINT}),{status,headers:corsHeaders});
+  const message=e instanceof ApiError?e.message:'Sunucu işlemi tamamlayamadı.';
+  let diagnostic: string|undefined;
+  if(!(e instanceof ApiError)){
+    console.error('game-api error',err);
+    diagnostic=String(e?.message||err||'Bilinmeyen sunucu hatası')
+      .replace(/Bearer\s+[^\s]+/gi,'Bearer [gizlendi]')
+      .replace(/(sb_secret_|service_role|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)/gi,'[gizli anahtar]')
+      .slice(0,400);
+  }
+  return new Response(JSON.stringify({error:message,diagnostic,code:e?.code||'server_error',rulesVersion:GAME_RULES.version,rulesFingerprint:GAME_RULES_FINGERPRINT}),{status,headers:corsHeaders});
 }
 
 async function firebaseIdentity(req:Request) {
