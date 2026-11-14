@@ -188,7 +188,7 @@ footer{text-align:center;color:#5a6a88;font-size:10px;padding:20px 0 10px}
 .auth-actions button{flex:1;padding:12px;border-radius:12px;font-weight:900;font-size:13px}
 .btn-gold{background:linear-gradient(135deg,#ffe27a,#ffad36);color:#2e1c08}
 .btn-dim{background:#1a2744;border:1px solid var(--line)}
-.auth-err{color:var(--red);font-size:12px;text-align:center;min-height:16px;margin-top:8px}
+.auth-err{color:var(--red);font-size:12px;text-align:center;min-height:16px;margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere}
 .back-link{text-align:center;color:var(--muted);font-size:12px;margin-top:12px;cursor:pointer}
 .extra-box{background:linear-gradient(160deg,#152038,#0e1526);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
 .extra-box h3{font-size:13px;font-weight:900;margin-bottom:10px}
@@ -1093,15 +1093,19 @@ assertGameRulesAlignment();
 const BALANCE_VERSION = GAME_RULES.version;
 const MAX_PURCHASE_MULTIPLIER = GAME_RULES.maxPurchaseMultiplier;
 const MAX_ECONOMY_MULTIPLIER = GAME_RULES.economyMultiplierCap;
-const defaultState = () => ({
-  balanceVersion:BALANCE_VERSION, money:0, total:0, clicks:0, best:0, owned:{}, multi:1,
-  pets:[], equippedPet:null, equippedPets:[], rebirths:0, level:1, xp:0,
-  questProgress:0, questClaimed:false, dailyLast:0, dailyStreak:0,
-  achievements:{}, settings:{sound:true,particles:true,crit:true,autosave:true,leaderboard:false,theme:'midnight'},
-  displayName:'Oyuncu', rankAnnounced:0, gameCompleted:false, boostUntil:0, boostType:'all', boostMultiplier:1,
-  lastSave:Date.now(), totalClicksEver:0, redeemed:[]
-});
-let state = defaultState();
+// Function declaration is hoisted: Local Mode can safely request a fresh state
+// without depending on a later const-initialization point or an old global binding.
+function createDefaultGameState(){
+  return {
+    balanceVersion:GAME_RULES.version, money:0, total:0, clicks:0, best:0, owned:{}, multi:1,
+    pets:[], equippedPet:null, equippedPets:[], rebirths:0, level:1, xp:0,
+    questProgress:0, questClaimed:false, dailyLast:0, dailyStreak:0,
+    achievements:{}, settings:{sound:true,particles:true,crit:true,autosave:true,leaderboard:false,theme:'midnight'},
+    displayName:'Oyuncu', rankAnnounced:0, gameCompleted:false, boostUntil:0, boostType:'all', boostMultiplier:1,
+    lastSave:Date.now(), totalClicksEver:0, redeemed:[]
+  };
+}
+let state = createDefaultGameState();
 let activeTab = 'all';
 let toastTimer = null;
 const MAX_EGGS_PER_OPEN = GAME_RULES.maxEggsPerOpen;
@@ -1271,7 +1275,7 @@ function dailyQuestReward(){
 }
 function applyServerProfile(profile){
   if(!profile || typeof profile!=='object') throw new Error('Sunucudan geçerli oyuncu profili gelmedi.');
-  const fresh=defaultState();
+  const fresh=createDefaultGameState();
   state={
     ...fresh,...profile,
     money:Math.max(0,Number(profile.money)||0),
@@ -1297,15 +1301,20 @@ function applyServerProfile(profile){
 async function gameApi(action,payload={}){
   if(!currentUser) throw new Error('Bulut hesabına giriş yapılmamış.');
   const token=await currentUser.getIdToken();
-  const response=await fetch(SUPABASE_GAME_API,{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'apikey':SUPABASE_PUBLISHABLE_KEY,
-      'Authorization':'Bearer '+token
-    },
-    body:JSON.stringify({rulesVersion:GAME_RULES.version,rulesFingerprint:GAME_RULES_FINGERPRINT,action,...payload})
-  });
+  let response;
+  try{
+    response=await fetch(SUPABASE_GAME_API,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':SUPABASE_PUBLISHABLE_KEY,
+        'Authorization':'Bearer '+token
+      },
+      body:JSON.stringify({rulesVersion:GAME_RULES.version,rulesFingerprint:GAME_RULES_FINGERPRINT,action,...payload})
+    });
+  }catch(networkError){
+    throw new Error(`Supabase game-api adresine erişilemedi (${SUPABASE_GAME_API}). Ağ/CORS/DNS ayrıntısı: ${networkError?.message||String(networkError)}`);
+  }
   let data={};
   try{data=await response.json();}catch{}
   if(!response.ok){
@@ -1314,7 +1323,8 @@ async function gameApi(action,payload={}){
       const serverFingerprint=typeof data.rulesFingerprint==='string'?data.rulesFingerprint:'parmak izi yok';
       throw new Error(`Supabase Edge Function eski/farklı sürümde. Bu HTML: v${GAME_RULES.version} (${GAME_RULES_FINGERPRINT}); sunucu: ${serverVersion} (${serverFingerprint}). supabase/functions/game-api/index.ts dosyasını güncelle ve game-api fonksiyonunu yeniden dağıt.`);
     }
-    throw new Error(data.error||('Sunucu hatası ('+response.status+').'));
+    const diagnostic=typeof data.diagnostic==='string'&&data.diagnostic?` Ayrıntı: ${data.diagnostic}`:'';
+    throw new Error((data.error||'Sunucu isteği reddetti.')+` [${data.code||'no_error_code'} · HTTP ${response.status}]`+diagnostic);
   }
   if(data.rulesVersion!==GAME_RULES.version||data.rulesFingerprint!==GAME_RULES_FINGERPRINT){
     const serverVersion=Number.isFinite(Number(data.rulesVersion))?'v'+data.rulesVersion:'bilinmiyor';
@@ -2423,14 +2433,14 @@ $('resetBtn').addEventListener('click',async()=>{
   }
   localStorage.removeItem('robuxClickerPro');
   const savedName=state.displayName||currentUser?.displayName||'Oyuncu';
-  state=defaultState();state.displayName=savedName;
+  state=createDefaultGameState();state.displayName=savedName;
   $('profileNameInput').value=savedName;syncSettingsToggles();render();toast('Oyun sıfırlandı.');
 });
 /* Yedek kodu içe/dışa aktarma kaldırıldı: yerel kodlarla bakiye değiştirilmesini önlemek için. */
 
 /* ===== Mode / Auth ===== */
 function normalizeLocalState(saved){
-  const fresh=defaultState();
+  const fresh=createDefaultGameState();
   if(!saved||typeof saved!=='object'||Array.isArray(saved))return fresh;
   const isRecord=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
   const number=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
@@ -2566,6 +2576,8 @@ function escapeHtml(value){
   return String(value??'').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
 }
 function authErrorMessage(err){
+  const code=String(err?.code||'').trim();
+  const message=String(err?.message||err||'').trim();
   const map={
     'auth/invalid-email':'E-posta adresi geçersiz.',
     'auth/user-not-found':'Bu e-posta ile kayıtlı hesap bulunamadı.',
@@ -2576,15 +2588,27 @@ function authErrorMessage(err){
     'auth/weak-password':'Şifre yeterince güçlü değil. En az 8 karakter kullan.',
     'auth/user-disabled':'Bu hesap devre dışı bırakılmış.',
     'auth/too-many-requests':'Çok fazla deneme yapıldı. Bir süre sonra tekrar dene.',
-    'auth/network-request-failed':'İnternet bağlantısı kurulamadı.',
-    'auth/operation-not-allowed':'Firebase Console’da E-posta/Şifre girişini etkinleştir.',
-    'auth/unauthorized-domain':'Bu site alan adı Firebase Authentication yetkili alanlarına eklenmeli.',
-    'permission-denied':'Firestore erişimi reddedildi. firestore.rules dosyasını Firebase Console’da yayımla.',
-    'failed-precondition':'Firebase veritabanı hazır değil veya bir kural/indeks eksik.',
-    'unavailable':'Firebase şu anda ulaşılamıyor. İnternet bağlantını kontrol et.',
-    'auth/username-taken':'Bu kullanıcı adı alınmış. Başka bir ad dene.'
+    'auth/network-request-failed':'Firebase Auth sunucusuna bağlanılamadı. İnternet ve içerik engelleyicileri kontrol et.',
+    'auth/operation-not-allowed':'Firebase Console’da Authentication > Sign-in method bölümünden E-posta/Şifre girişini etkinleştir.',
+    'auth/unauthorized-domain':'Bu site alan adı Firebase Authentication > Authorized domains listesine eklenmeli.',
+    'auth/invalid-api-key':'Firebase API anahtarı geçersiz. index.html içindeki firebaseConfig.apiKey değerini kontrol et.',
+    'auth/api-key-not-valid.-please-pass-a-valid-api-key.':'Firebase API anahtarı geçersiz veya API anahtarı kısıtlamaları bu siteyi engelliyor.',
+    'auth/app-not-authorized':'Bu web uygulaması Firebase projesinde yetkilendirilmemiş. Firebase uygulama ayarlarını kontrol et.',
+    'auth/requests-to-this-api-are-blocked':'Google Cloud API anahtarı kısıtlamaları Firebase Authentication isteğini engelliyor.',
+    'auth/admin-restricted-operation':'Bu işlem Firebase projesinde yönetici tarafından kısıtlanmış.',
+    'auth/quota-exceeded':'Firebase Authentication kullanım sınırına ulaşıldı.',
+    'auth/internal-error':'Firebase Authentication iç hata verdi. Ayrıntıyı ve hata kodunu kontrol et.',
+    'auth/web-storage-unsupported':'Safari bu bağlamda oturum depolamasına izin vermiyor. Oturum kalıcılığı kapatılarak tekrar denenebilir.',
+    'auth/unsupported-persistence-type':'Bu tarayıcı oturum kalıcılığını desteklemiyor. Geçici oturumla devam et.',
+    'auth/username-taken':'Bu kullanıcı adı alınmış. Başka bir ad dene.',
+    'permission-denied':'Veritabanı erişimi reddedildi. Supabase game_profiles tablo yetkilerini ve RLS politikasını kontrol et.',
+    'failed-precondition':'Veritabanı hazır değil veya gerekli tablo/şema eksik.',
+    'unavailable':'Sunucuya ulaşılamıyor. İnternet bağlantısını ve Supabase durumunu kontrol et.'
   };
-  return map[err.code]||'İşlem tamamlanamadı. Firebase ayarlarını ve güvenlik kurallarını kontrol et.';
+  const friendly=map[code];
+  if(friendly)return code+' — '+friendly+(message&&!message.includes(code)?' Ayrıntı: '+message:'');
+  if(message)return (code?`Hata kodu: ${code}. `:'')+`Ayrıntı: ${message}`;
+  return code?`Bilinmeyen hata kodu: ${code}`:'Hata ayrıntısı alınamadı. Safari Geliştirici Konsolu’nu kontrol et.';
 }
 async function resetPassword(){
   if(!auth){$('authErr').textContent='Firebase bağlantısı yok.';return;}
@@ -2613,21 +2637,40 @@ async function doAuth(){
   authBusy=true;
   const oldText=$('authBtn').textContent;
   $('authBtn').disabled=true;$('authSwitch').disabled=true;$('authBtn').textContent='Bağlanıyor…';
+  let authStage='Firebase kimlik doğrulama';
+  let authenticatedUser=null;
   try{
-    await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+    try{
+      await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+    }catch(persistenceError){
+      console.warn('SESSION persistence unavailable; retrying without persistence.',persistenceError);
+      // Safari privacy settings can block web storage. NONE still permits Firebase login.
+      await auth.setPersistence(firebase.auth.Auth.Persistence.NONE);
+    }
     let user;
     if(authMode==='register'){
+      authStage='Firebase hesap oluşturma';
       const cred=await auth.createUserWithEmailAndPassword(email,pass);
       user=cred.user;
-      await user.updateProfile({displayName:username}).catch(()=>{});
+      authenticatedUser=user;
+      await user.updateProfile({displayName:username}).catch(profileError=>console.warn('Firebase displayName update failed',profileError));
     }else{
+      authStage='Firebase giriş';
       const cred=await auth.signInWithEmailAndPassword(email,pass);
       user=cred.user;
+      authenticatedUser=user;
     }
+    authStage='Supabase bulut profilini yükleme';
     await activateCloud(user);
   }catch(err){
-    $('authErr').textContent=(err?.message&&/Supabase|profil|sunucu|oturum/i.test(err.message))?err.message:authErrorMessage(err);
-    console.error('Authentication / Supabase bootstrap failed',err);
+    const details=authErrorMessage(err);
+    $('authErr').textContent=`${authStage} aşamasında hata oluştu.\n${details}`;
+    console.error(`${authStage} failed`,{code:err?.code||null,message:err?.message||String(err),error:err});
+    // A failed profile bootstrap must not leave a half-open cloud session behind.
+    if(authenticatedUser){
+      currentUser=null;mode=null;
+      try{if(auth.currentUser?.uid===authenticatedUser.uid)await auth.signOut();}catch(signOutError){console.warn('Cleanup sign-out failed',signOutError);}
+    }
   }finally{
     authBusy=false;$('authBtn').disabled=false;$('authSwitch').disabled=false;$('authBtn').textContent=oldText;
   }
@@ -2686,7 +2729,7 @@ async function doLogout(){
     try{await auth.signOut();}catch(e){console.warn(e);}
   }
   authBusy=false;
-  state=defaultState();leaderboardData=[];
+  state=createDefaultGameState();leaderboardData=[];
   currentUser=null;mode=null;
   $('gameApp').classList.add('hidden');$('authOverlay').classList.add('hidden');$('modeOverlay').classList.remove('hidden');
   $$('.nav-btn').forEach(b=>b.classList.remove('active'));$$('.nav-btn')[0].classList.add('active');
@@ -2699,10 +2742,16 @@ if(auth){
   if(authBusy)return;
   if(user){
     if(currentUser?.uid===user.uid)return;
-    try{await activateCloud(user);}catch(err){console.error('Session restore failed',err);currentUser=null;mode=null;$('gameApp').classList.add('hidden');$('modeOverlay').classList.remove('hidden');$('authOverlay').classList.add('hidden');toast('Oturum yüklenemedi. Supabase tablosu ve Edge Function dağıtımını kontrol et.');}
+    try{await activateCloud(user);}catch(err){
+      console.error('Session restore failed',err);
+      currentUser=null;mode=null;
+      $('gameApp').classList.add('hidden');$('modeOverlay').classList.remove('hidden');$('authOverlay').classList.remove('hidden');
+      $('authErr').style.color='var(--red)';
+      $('authErr').textContent='Kayıtlı bulut oturumu yüklenemedi. '+authErrorMessage(err);
+    }
   }else if(currentUser && mode==='cloud'){
     if(leaderboardUnsub){leaderboardUnsub();leaderboardUnsub=null;}
-    currentUser=null;mode=null;state=defaultState();leaderboardData=[];
+    currentUser=null;mode=null;state=createDefaultGameState();leaderboardData=[];
     $('gameApp').classList.add('hidden');$('modeOverlay').classList.remove('hidden');
   }
   });
