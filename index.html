@@ -776,6 +776,24 @@ const GAME_RULES = Object.freeze({
   goldenVisibleMs:12000
 });
 
+// Core globals are initialized immediately after GAME_RULES. `var` is deliberate:
+// it prevents a Temporal Dead Zone if an early browser/auth callback reaches the
+// game during startup. These values remain sourced from GAME_RULES (single source).
+var BALANCE_VERSION = GAME_RULES.version;
+var MAX_PURCHASE_MULTIPLIER = GAME_RULES.maxPurchaseMultiplier;
+var MAX_ECONOMY_MULTIPLIER = GAME_RULES.economyMultiplierCap;
+function createDefaultGameState(){
+  return {
+    balanceVersion:GAME_RULES.version, money:0, total:0, clicks:0, best:0, owned:{}, multi:1,
+    pets:[], equippedPet:null, equippedPets:[], rebirths:0, level:1, xp:0,
+    questProgress:0, questClaimed:false, dailyLast:0, dailyStreak:0,
+    achievements:{}, settings:{sound:true,particles:true,crit:true,autosave:true,leaderboard:false,theme:'midnight'},
+    displayName:'Oyuncu', rankAnnounced:0, gameCompleted:false, boostUntil:0, boostType:'all', boostMultiplier:1,
+    lastSave:Date.now(), totalClicksEver:0, redeemed:[]
+  };
+}
+var state = createDefaultGameState();
+
 let auth=null, firebaseReady=false;
 if(window.firebase && typeof firebase.auth==='function'){
   try{
@@ -1088,24 +1106,9 @@ function assertGameRulesAlignment(){
   if(rankHint)rankHint.textContent=`Her yeni rütbe kalıcı ve özel bir yetenek açar. Son basamak 1 ${GAME_RULES.finishNameTurkish} R$ değerindedir.`;
 }
 assertGameRulesAlignment();
+window.__ROBUX_CLICKER_CORE_READY__ = true;
 
 // ========== STATE ==========
-const BALANCE_VERSION = GAME_RULES.version;
-const MAX_PURCHASE_MULTIPLIER = GAME_RULES.maxPurchaseMultiplier;
-const MAX_ECONOMY_MULTIPLIER = GAME_RULES.economyMultiplierCap;
-// Function declaration is hoisted: Local Mode can safely request a fresh state
-// without depending on a later const-initialization point or an old global binding.
-function createDefaultGameState(){
-  return {
-    balanceVersion:GAME_RULES.version, money:0, total:0, clicks:0, best:0, owned:{}, multi:1,
-    pets:[], equippedPet:null, equippedPets:[], rebirths:0, level:1, xp:0,
-    questProgress:0, questClaimed:false, dailyLast:0, dailyStreak:0,
-    achievements:{}, settings:{sound:true,particles:true,crit:true,autosave:true,leaderboard:false,theme:'midnight'},
-    displayName:'Oyuncu', rankAnnounced:0, gameCompleted:false, boostUntil:0, boostType:'all', boostMultiplier:1,
-    lastSave:Date.now(), totalClicksEver:0, redeemed:[]
-  };
-}
-let state = createDefaultGameState();
 let activeTab = 'all';
 let toastTimer = null;
 const MAX_EGGS_PER_OPEN = GAME_RULES.maxEggsPerOpen;
@@ -2750,55 +2753,3 @@ if(auth){
       $('authErr').textContent='Kayıtlı bulut oturumu yüklenemedi. '+authErrorMessage(err);
     }
   }else if(currentUser && mode==='cloud'){
-    if(leaderboardUnsub){leaderboardUnsub();leaderboardUnsub=null;}
-    currentUser=null;mode=null;state=createDefaultGameState();leaderboardData=[];
-    $('gameApp').classList.add('hidden');$('modeOverlay').classList.remove('hidden');
-  }
-  });
-}
-// Profile name editor (local profile or Firebase display name)
-$('saveProfileBtn').addEventListener('click',async()=>{
-  const raw=$('profileNameInput').value.trim();
-  if(!/^[\p{L}\p{N}_ -]{3,18}$/u.test(raw))return toast('Takma ad 3–18 karakter olmalı.');
-  const name=cleanDisplayName(raw);
-  try{
-    if(mode==='cloud'&&currentUser){
-      await currentUser.updateProfile({displayName:name});
-      state.displayName=name;
-    }else state.displayName=name;
-    $('profileNameInput').value=name;
-    renderLB(leaderboardData);
-    await save(true);
-    toast('Profil adı güncellendi!');
-  }catch(err){console.error(err);toast('Profil kaydedilemedi.');}
-});
-
-// Auto tick: local mode calculates locally; cloud mode asks the server every 10 seconds.
-setInterval(async()=>{
-  if(!mode)return;
-  if(mode==='local'){
-    const g=autoPower();
-    if(g>0){
-      add(g);
-      render();
-      save();
-    }else if(state.boostUntil){
-      if(Date.now()>=state.boostUntil){
-        state.boostUntil=0;
-        updateBonusUI();
-        save();
-      }else updateBonusUI();
-    }
-    return;
-  }
-  if(mode==='cloud'){
-    if(Date.now()-lastCloudTick>=10000){
-      lastCloudTick=Date.now();
-      try{const result=await gameApi('tick');applyServerProfile(result.profile);if(Number(result.gain)>0)render();}
-      catch(err){console.warn('Secure auto tick failed',err);}
-    }else if((state.boostUntil||0)>Date.now())updateBonusUI();
-  }
-},1000);
-</script>
-</body>
-</html>
