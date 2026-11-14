@@ -219,6 +219,8 @@ if(GAME_RULES.finishExponent+1!==GAME_RULES.rankCount||GAME_RULES.finishValue!==
   throw new Error('GAME_RULES catalog mismatch: update index.ts and index.html together.');
 }
 
+// Parmak izi farklı JavaScript motorlarında aynı kalsın diye sayıları 12 anlamlı haneye sabitle.
+const fingerprintNumber = (value: unknown) => Number(Number(value).toPrecision(12));
 function fnv1a64(value: string) {
   let hash = 0xcbf29ce484222325n;
   const prime = 0x100000001b3n;
@@ -229,11 +231,11 @@ function fnv1a64(value: string) {
 }
 const GAME_RULES_FINGERPRINT = fnv1a64(JSON.stringify({
   rules:Object.keys(GAME_RULES).sort().map((key)=>[key,(GAME_RULES as any)[key]]),
-  rankThresholds:Array.from({length:GAME_RULES.rankCount},(_,index)=>[index,index===0?0:Math.pow(10,index)]),
+  rankThresholds:Array.from({length:GAME_RULES.rankCount},(_,index)=>[index,fingerprintNumber(index===0?0:Math.pow(10,index))]),
   numberUnits:NUMBER_UNITS,
-  items:ITEMS.map((item:any)=>[item.id,item.type,Number(item.cost),Number(item.power),Number(item.unlockRank||0)]),
-  pets:PETS.map((pet:any)=>[pet.name,pet.icon,pet.rarity,Number(pet.min),Number(pet.max),Number(pet.unlockRank||0)]),
-  rarities:RARITIES.map(([rarity,weight,unlock])=>[rarity,weight,unlock]),
+  items:ITEMS.map((item:any)=>[item.id,item.type,fingerprintNumber(item.cost),fingerprintNumber(item.power),Number(item.unlockRank||0)]),
+  pets:PETS.map((pet:any)=>[pet.name,pet.icon,pet.rarity,fingerprintNumber(pet.min),fingerprintNumber(pet.max),Number(pet.unlockRank||0)]),
+  rarities:RARITIES.map(([rarity,weight,unlock])=>[rarity,fingerprintNumber(weight),unlock]),
 }));
 
 class ApiError extends Error {
