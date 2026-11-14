@@ -384,7 +384,7 @@ body[data-theme="emerald"]{background:radial-gradient(ellipse at 12% 0%,#155a4a 
 <!-- MODE -->
 <div id="modeOverlay" class="overlay">
   <div class="brand" style="margin-bottom:6px"><div class="logo">R$</div><div class="brand-text">ROBUX CLICKER<small id="endgameBranding">X EDITION · SCRATCH-INSPIRED CLICKER • TRESVIGINTILLION ENDGAME</small></div></div>
-  <button class="mode-card" id="startLocalButton" type="button"><strong>📁 Yerel Mod</strong><span>Sadece bu cihaz • İnternet gerekmez</span></button>
+  <button class="mode-card" id="startLocalButton" type="button" onclick="window.startLocal ? window.startLocal() : (document.getElementById('modeError').textContent='Yerel oyun kodu yüklenemedi. Sayfayı yenile.')"><strong>📁 Yerel Mod</strong><span>Sadece bu cihaz • İnternet gerekmez</span></button>
   <button class="mode-card" id="startCloudButton" type="button" onclick="showAuth()"><strong>☁️ Bulut Mod</strong><span>Hesap ile giriş • Bulut kayıt ve canlı sıralama</span></button>
   <div class="mode-error" id="modeError" role="status" aria-live="polite"></div>
 </div>
@@ -845,7 +845,7 @@ for(let tier=1;tier<=UPGRADE_TIER_COUNT;tier++){
   const index=tier-1;
   // scale, bu rütbenin hedef değerinin onda biridir (10^(tier-1)).
   // Bu oranlar, önceki sürümdeki aşırı yüksek +%17-20 gelir sıçramalarını engeller.
-  const scale=Math.pow(10,index);
+  const scale=10 ** index;
   const label=UPGRADE_TIER_NAMES[index];
   const icon=UPGRADE_ICONS[index%UPGRADE_ICONS.length];
   const clickPowerGain=Math.max(1,Math.round(scale*0.07));
@@ -865,7 +865,7 @@ for(let tier=1;tier<=UPGRADE_TIER_COUNT;tier++){
 }
 for(let step=1;step<=Math.floor(UPGRADE_TIER_COUNT/2);step++){
   const tier=step*2;
-  const scale=Math.pow(10,tier-1);
+  const scale=10 ** (tier-1);
   const factor=1.03+step*0.0015;
   ITEMS.push({
     id:`rank-mult-${String(step).padStart(2,'0')}`,
@@ -1038,12 +1038,14 @@ function rankPerkForIndex(index){
   return {type:template.type,value,label:template.label,description:`${template.label} ${amount} (kalıcı)`};
 }
 const RANKS = RANK_NAMES.map((name,index)=>({
-  name,value:index===0?0:Math.pow(10,index),icon:RANK_ICONS[index%RANK_ICONS.length],color:RANK_COLORS[index%RANK_COLORS.length],
+  name,value:index===0?0:10 ** index,icon:RANK_ICONS[index%RANK_ICONS.length],color:RANK_COLORS[index%RANK_COLORS.length],
   unit:rankUnitForExponent(index),perk:rankPerkForIndex(index)
 }));
 const GAME_FINISH_VALUE = GAME_RULES.finishValue;
 const RARITY_UNLOCK_RANK = {common:0,uncommon:0,rare:0,epic:0,legendary:0,mythic:0,secret:0,celestial:0,divine:15,eternal:18,infinite:24,nonillion:30,vigintillion:33,unvigintillion:36,duovigintillion:42,tresvigintillion:48,quattuorvigintillion:54,quinvigintillion:60,sexvigintillion:66,septemvigintillion:72};
 
+// Parmak izi farklı JavaScript motorlarında aynı kalsın diye sayıları 12 anlamlı haneye sabitle.
+const fingerprintNumber=value=>Number(Number(value).toPrecision(12));
 function fnv1a64(value){
   let hash=0xcbf29ce484222325n;
   const prime=0x100000001b3n;
@@ -1052,11 +1054,11 @@ function fnv1a64(value){
 }
 const GAME_RULES_FINGERPRINT = fnv1a64(JSON.stringify({
   rules:Object.keys(GAME_RULES).sort().map(key=>[key,GAME_RULES[key]]),
-  rankThresholds:RANKS.map((rank,index)=>[index,rank.value]),
+  rankThresholds:RANKS.map((rank,index)=>[index,fingerprintNumber(rank.value)]),
   numberUnits:NUMBER_UNITS.map(unit=>[unit.exp,unit.name,unit.suffix]),
-  items:ITEMS.map(item=>[item.id,item.type,Number(item.cost),Number(item.power),Number(item.unlockRank||0)]),
-  pets:PET_POOL.map(pet=>[pet.name,pet.icon,pet.rarity,Number(pet.min),Number(pet.max),Number(pet.unlockRank||0)]),
-  rarities:RARITY_CHANCE.map(item=>[item.r,item.w,Number(RARITY_UNLOCK_RANK[item.r]??0)]),
+  items:ITEMS.map(item=>[item.id,item.type,fingerprintNumber(item.cost),fingerprintNumber(item.power),Number(item.unlockRank||0)]),
+  pets:PET_POOL.map(pet=>[pet.name,pet.icon,pet.rarity,fingerprintNumber(pet.min),fingerprintNumber(pet.max),Number(pet.unlockRank||0)]),
+  rarities:RARITY_CHANCE.map(item=>[item.r,fingerprintNumber(item.w),Number(RARITY_UNLOCK_RANK[item.r]??0)]),
 }));
 
 function assertGameRulesAlignment(){
@@ -2524,8 +2526,6 @@ function startLocal(){
     if(button)button.disabled=false;
   }
 }
-const localModeButton=$('startLocalButton');
-if(localModeButton)localModeButton.addEventListener('click',startLocal);
 window.startLocal=startLocal;
 
 function showAuth(){
