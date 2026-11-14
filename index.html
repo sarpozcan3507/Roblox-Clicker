@@ -180,6 +180,7 @@ footer{text-align:center;color:#5a6a88;font-size:10px;padding:20px 0 10px}
 .mode-card:hover{border-color:var(--blue);transform:translateY(-2px)}
 .mode-card strong{display:block;font-size:15px;margin-bottom:4px}
 .mode-card span{color:var(--muted);font-size:12px}
+.mode-error{width:min(340px,100%);min-height:16px;color:#fca5a5;font-size:11px;line-height:1.45;text-align:center;overflow-wrap:anywhere}
 .auth-card{width:min(380px,100%);padding:24px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(160deg,#152038,#0e1526)}
 .auth-card h2{margin:0 0 14px;text-align:center;font-size:18px}
 .auth-card input{width:100%;padding:12px 14px;margin-bottom:10px;border-radius:12px;border:1px solid var(--line);background:#0b1224;color:var(--text);font-size:14px}
@@ -383,8 +384,9 @@ body[data-theme="emerald"]{background:radial-gradient(ellipse at 12% 0%,#155a4a 
 <!-- MODE -->
 <div id="modeOverlay" class="overlay">
   <div class="brand" style="margin-bottom:6px"><div class="logo">R$</div><div class="brand-text">ROBUX CLICKER<small id="endgameBranding">X EDITION · SCRATCH-INSPIRED CLICKER • TRESVIGINTILLION ENDGAME</small></div></div>
-  <button class="mode-card" onclick="startLocal()"><strong>📁 Yerel Mod</strong><span>Sadece bu cihaz • İnternet gerekmez</span></button>
-  <button class="mode-card" onclick="showAuth()"><strong>☁️ Bulut Mod</strong><span>Hesap ile giriş • Bulut kayıt ve canlı sıralama</span></button>
+  <button class="mode-card" id="startLocalButton" type="button"><strong>📁 Yerel Mod</strong><span>Sadece bu cihaz • İnternet gerekmez</span></button>
+  <button class="mode-card" id="startCloudButton" type="button" onclick="showAuth()"><strong>☁️ Bulut Mod</strong><span>Hesap ile giriş • Bulut kayıt ve canlı sıralama</span></button>
+  <div class="mode-error" id="modeError" role="status" aria-live="polite"></div>
 </div>
 
 <!-- AUTH -->
@@ -1304,9 +1306,18 @@ async function gameApi(action,payload={}){
   });
   let data={};
   try{data=await response.json();}catch{}
-  if(!response.ok) throw new Error(data.error||('Sunucu hatası ('+response.status+').'));
+  if(!response.ok){
+    if(data.code==='rules_version_mismatch'){
+      const serverVersion=Number.isFinite(Number(data.rulesVersion))?'v'+data.rulesVersion:'bilinmiyor';
+      const serverFingerprint=typeof data.rulesFingerprint==='string'?data.rulesFingerprint:'parmak izi yok';
+      throw new Error(`Supabase Edge Function eski/farklı sürümde. Bu HTML: v${GAME_RULES.version} (${GAME_RULES_FINGERPRINT}); sunucu: ${serverVersion} (${serverFingerprint}). supabase/functions/game-api/index.ts dosyasını güncelle ve game-api fonksiyonunu yeniden dağıt.`);
+    }
+    throw new Error(data.error||('Sunucu hatası ('+response.status+').'));
+  }
   if(data.rulesVersion!==GAME_RULES.version||data.rulesFingerprint!==GAME_RULES_FINGERPRINT){
-    throw new Error('Bulut oyun verileri eşleşmiyor. index.html ve Supabase index.ts dosyalarının ikisini de aynı sürümle dağıt.');
+    const serverVersion=Number.isFinite(Number(data.rulesVersion))?'v'+data.rulesVersion:'bilinmiyor';
+    const serverFingerprint=typeof data.rulesFingerprint==='string'?data.rulesFingerprint:'parmak izi yok';
+    throw new Error(`Supabase yanıtı sürümle eşleşmiyor. Bu HTML: v${GAME_RULES.version} (${GAME_RULES_FINGERPRINT}); sunucu: ${serverVersion} (${serverFingerprint}). Edge Function'ı yeniden dağıt.`);
   }
   return data;
 }
@@ -2416,40 +2427,107 @@ $('resetBtn').addEventListener('click',async()=>{
 /* Yedek kodu içe/dışa aktarma kaldırıldı: yerel kodlarla bakiye değiştirilmesini önlemek için. */
 
 /* ===== Mode / Auth ===== */
+function normalizeLocalState(saved){
+  const fresh=defaultState();
+  if(!saved||typeof saved!=='object'||Array.isArray(saved))return fresh;
+  const isRecord=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
+  const number=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
+  const money=Math.min(GAME_FINISH_VALUE,Math.max(0,number(saved.money)));
+  const clicks=Math.max(0,Math.floor(number(saved.clicks)));
+  const pets=(Array.isArray(saved.pets)?saved.pets:[])
+    .filter(pet=>isRecord(pet)&&(typeof pet.id==='string'||typeof pet.id==='number'))
+    .slice(0,GAME_RULES.maxPets)
+    .map(pet=>({...pet,id:String(pet.id)}));
+  const petIds=new Set(pets.map(pet=>pet.id));
+  const equippedSource=Array.isArray(saved.equippedPets)?saved.equippedPets:(saved.equippedPet?[saved.equippedPet]:[]);
+  const equippedPets=[...new Set(equippedSource.map(String).filter(id=>petIds.has(id)))].slice(0,3);
+  const settings={...fresh.settings,...(isRecord(saved.settings)?saved.settings:{})};
+  if(!['midnight','ocean','nebula','ember','emerald'].includes(settings.theme))settings.theme='midnight';
+  const next={
+    ...fresh,...saved,
+    money,
+    total:Math.max(money,number(saved.total,money)),
+    clicks,
+    totalClicksEver:Math.max(0,Math.floor(number(saved.totalClicksEver,clicks))),
+    best:Math.min(GAME_FINISH_VALUE,Math.max(money,number(saved.best,money))),
+    owned:isRecord(saved.owned)?saved.owned:{},
+    pets,
+    equippedPets,
+    equippedPet:equippedPets[0]||null,
+    achievements:isRecord(saved.achievements)?saved.achievements:{},
+    redeemed:Array.isArray(saved.redeemed)?saved.redeemed.filter(value=>typeof value==='string'):[],
+    settings,
+    level:Math.max(1,Math.floor(number(saved.level,1))),
+    xp:Math.max(0,number(saved.xp)),
+    rebirths:Math.max(0,Math.floor(number(saved.rebirths))),
+    multi:Math.max(1,Math.min(MAX_PURCHASE_MULTIPLIER,number(saved.multi,1))),
+    questProgress:Math.max(0,Math.min(50,Math.floor(number(saved.questProgress)))),
+    dailyStreak:Math.max(0,Math.floor(number(saved.dailyStreak))),
+    rankAnnounced:Math.max(0,Math.min(GAME_RULES.rankCount-1,Math.floor(number(saved.rankAnnounced)))),
+    boostUntil:Math.max(0,number(saved.boostUntil)),
+    boostType:['all','click','auto'].includes(saved.boostType)?saved.boostType:'all',
+    boostMultiplier:Math.max(1,number(saved.boostMultiplier,1)),
+    lastSave:Math.max(0,number(saved.lastSave,Date.now())),
+    balanceVersion:BALANCE_VERSION,
+  };
+  next.gameCompleted=next.money>=GAME_FINISH_VALUE;
+  return next;
+}
 function startLocal(){
-  mode='local';
-  try {
-    const raw = localStorage.getItem('robuxClickerPro');
-    if(raw){
-      const s = JSON.parse(raw);
-      state = {...defaultState(),...s, owned:s.owned||{}, pets:s.pets||[], achievements:s.achievements||{}, settings:{...defaultState().settings,...(s.settings||{})}, equippedPets:Array.isArray(s.equippedPets)?s.equippedPets.slice(0,3):(s.equippedPet?[s.equippedPet]:[]), redeemed:s.redeemed||[]};
-      migrateBalanceState(s);
+  const button=$('startLocalButton');
+  if(button)button.disabled=true;
+  try{
+    mode='local';
+    currentUser=null;
+    let saved=null;
+    try{
+      const raw=localStorage.getItem('robuxClickerPro');
+      if(raw)saved=JSON.parse(raw);
+    }catch(err){
+      console.warn('Yerel kayıt okunamadı; güvenli yeni kayıt açılıyor.',err);
+      try{localStorage.removeItem('robuxClickerPro');}catch{}
     }
-  } catch(e){}
-  // offline
-  (function(){
-    const now = Date.now();
-    const diff = Math.min(now - (state.lastSave||now), GAME_RULES.offlineCapSeconds*1000);
-    if(diff > 30000){
-      const sec = Math.floor(diff/1000);
-      const offlineRaw = autoPower() * sec * offlineBonus() * GAME_RULES.offlineGainMultiplier;
-      const rankNow = currentRankIndex();
-      const nextRank = RANKS[rankNow+1];
-      const remaining = nextRank ? Math.max(0,nextRank.value-state.total) : Math.max(0,GAME_FINISH_VALUE-state.money);
-      const gain = Math.floor(Math.min(offlineRaw,remaining*GAME_RULES.offlineRankProgressMultiplier));
-      if(gain > 0){
-        add(gain, false);
-        $('offlineText').textContent = `Çevrimdışı ${Math.floor(sec/60)} dk · +${fmt(gain)} R$ kazandın!`;
+    state=normalizeLocalState(saved);
+    migrateBalanceState(state);
+
+    const now=Date.now();
+    const diff=Math.min(GAME_RULES.offlineCapSeconds*1000,Math.max(0,now-(state.lastSave||now)));
+    if(diff>30000){
+      const sec=Math.floor(diff/1000);
+      const offlineRaw=autoPower()*sec*offlineBonus()*GAME_RULES.offlineGainMultiplier;
+      const rankNow=currentRankIndex();
+      const nextRank=RANKS[rankNow+1];
+      const remaining=nextRank?Math.max(0,nextRank.value-state.total):Math.max(0,GAME_FINISH_VALUE-state.money);
+      const gain=Math.floor(Math.min(offlineRaw,remaining*GAME_RULES.offlineRankProgressMultiplier));
+      if(gain>0){
+        add(gain,false);
+        $('offlineText').textContent=`Çevrimdışı ${Math.floor(sec/60)} dk · +${fmt(gain)} R$ kazandın!`;
         $('offlineBanner').classList.add('show');
-        setTimeout(()=>$('offlineBanner').classList.remove('show'), 8000);
+        setTimeout(()=>$('offlineBanner').classList.remove('show'),8000);
       }
     }
-    state.lastSave = now;
-  })();
-  $('modePill').textContent='YEREL';
-  syncSettingsToggles();
-  enterGame();
+    state.lastSave=now;
+    $('modeError').textContent='';
+    $('modePill').textContent='YEREL';
+    syncSettingsToggles();
+    enterGame();
+  }catch(err){
+    console.error('Yerel mod başlatılamadı:',err);
+    mode='local';
+    try{
+      $('authOverlay').classList.add('hidden');
+      $('gameApp').classList.add('hidden');
+      $('modeOverlay').classList.remove('hidden');
+      $('modeError').textContent='Yerel mod açılamadı: '+(err?.message||String(err));
+    }catch(uiError){console.error('Yerel mod hata mesajı gösterilemedi:',uiError);}
+  }finally{
+    if(button)button.disabled=false;
+  }
 }
+const localModeButton=$('startLocalButton');
+if(localModeButton)localModeButton.addEventListener('click',startLocal);
+window.startLocal=startLocal;
+
 function showAuth(){
   if(!firebaseReady||!auth){toast('Firebase giriş bağlantısı kurulamadı. Yerel Mod kullanılabilir.');return;}
   mode='cloud';
