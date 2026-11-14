@@ -1,41 +1,35 @@
-ROBUX CLICKER X — YEREL MOD + BULUT HATA AYRINTISI DÜZELTMESİ
+ROBUX CLICKER X — BAŞLATMA SIRASI / TDZ DÜZELTMESİ
 
-PAKET İÇERİĞİ
-- index.html
-- index.ts (referans kopya)
-- supabase/functions/game-api/index.ts (Supabase CLI'ın dağıtacağı asıl dosya)
+BU SÜRÜMDE DÜZELTİLENLER
+1. MAX_PURCHASE_MULTIPLIER, MAX_ECONOMY_MULTIPLIER ve BALANCE_VERSION,
+   GAME_RULES tanımlanır tanımlanmaz başlatılır.
+2. createDefaultGameState() ve global state de ilk oyun doğrulamasından
+   önce oluşturulur. Böylece erken callback'lerde
+   "Cannot access 'MAX_PURCHASE_MULTIPLIER' before initialization" ve
+   "Cannot access 'state' before initialization" hataları önlenir.
+3. Oyun verisi ve ilerleme kuralları değiştirilmedi. Kayıt biçimi v5,
+   bitiş hedefi 1 Tresvigintilyon (10^72) olarak korunur.
+4. index.ts aynı çalışan Supabase Edge Function kaynağıdır. Bu düzeltme
+   HTML istemcisinin başlatma sırasıyla ilgilidir; sunucu kuralları değişmedi.
 
-DÜZELTMELER
-1. Yerel durum oluşturucu defaultState sabitinden, hoist edilen
-   createDefaultGameState() fonksiyonuna taşındı. Böylece başlatma sırası
-   kaynaklı `Cannot access 'defaultState' before initialization` hatası
-   ortadan kaldırıldı.
-2. Bulut girişinde hata aşaması ayrıştırılıyor: Firebase giriş mi, Supabase
-   profil yükleme mi başarısız oldu, ekranda yazıyor.
-3. Bilinmeyen Firebase hataları artık genel bir uyarıya çevrilmiyor; gerçek
-   hata kodu ve ayrıntısı gösteriliyor.
-4. Supabase ağ/CORS/DNS hataları, HTTP durum kodu ve sunucu hata kodu görünür.
-5. Safari SESSION depolamasını engelliyorsa giriş NONE (geçici oturum) ile
-   tekrar deneniyor.
-6. Oyun hedefi 1 Tresvigintilyon (10^72) olarak korunmuştur.
-7. Oyun veri sözleşmesi değişmediği için rulesVersion v5 olarak korunmuştur.
+DOSYA YERLEŞİMİ
+- index.html -> Firebase Hosting'in public klasörüne (proje yapılandırmasına göre)
+- index.ts -> yalnızca referans kopya
+- supabase/functions/game-api/index.ts -> Supabase CLI'ın kullandığı gerçek dosya
 
-KURULUM (Mac)
-1. ZIP'i indir.
-2. Terminal'de şu komutu çalıştırarak dosyaları mevcut projenin üzerine çıkar:
+KURULUM
+1. ZIP içeriğini mevcut ~/Downloads/robux-clicker klasörüne çıkar.
+2. ZIP içindeki index.html dosyasının firebase.json içindeki "public" dizininde
+   bulunduğunu doğrula. Standart proje kökü kullanılıyorsa olduğu gibi bırak.
+3. Proje klasöründe Hosting'i yayımla:
 
-unzip -o ~/Downloads/robux-clicker-v8-fix.zip -d ~/Downloads/robux-clicker
-
-3. Ardından dağıt:
-
-cd ~/Downloads/robux-clicker && test -s index.html && test -s supabase/functions/game-api/index.ts && supabase functions deploy game-api --project-ref pfzyxueduypesaqfwnrf --use-api --no-verify-jwt && firebase deploy --project roblox-clicker07 --only hosting
-
-4. Dağıtım tamamlandıktan sonra Safari'de Cmd+Shift+R yap.
+   cd ~/Downloads/robux-clicker && firebase deploy --project roblox-clicker07 --only hosting
 
 ÖNEMLİ
-- Bu paket dosyaları hazırlar; hesaplarına kendiliğinden dağıtım yapmaz.
-- Kök dizindeki index.ts kopyadır. Supabase CLI'ın asıl kaynağı
-  supabase/functions/game-api/index.ts dosyasıdır.
-- Bulut modu hâlâ başarısız olursa giriş ekranındaki hata aşamasını, hata
-  kodunu ve ayrıntıyı aynen paylaş. Artık gerçek Firebase/Supabase sebebi
-  gizlenmeden görülecektir.
+- Bu düzeltme yalnızca istemci başlatma sırasını değiştiriyor. Supabase
+  GAME_RULES ve fingerprint değişmediği için Edge Function'ı yeniden dağıtmak
+  zorunlu değildir.
+- Gerçek Supabase kaynak dosyası:
+  supabase/functions/game-api/index.ts
+- Dağıtım sonrası Safari'de Cmd+Shift+R ile sayfayı tamamen yenile.
+- Oyun eski kayıtları açarken mevcut kaydı sıfırlamaz.
