@@ -383,8 +383,8 @@ body[data-theme="emerald"]{background:radial-gradient(ellipse at 12% 0%,#155a4a 
 <!-- MODE -->
 <div id="modeOverlay" class="overlay">
   <div class="brand" style="margin-bottom:6px"><div class="logo">R$</div><div class="brand-text">ROBUX CLICKER<small id="endgameBranding">X EDITION · SCRATCH-INSPIRED CLICKER • TRESVIGINTILLION ENDGAME</small></div></div>
-  <button class="mode-card" onclick="startLocal()"><strong>📁 Yerel Mod</strong><span>Sadece bu cihaz • İnternet gerekmez</span></button>
-  <button class="mode-card" onclick="showAuth()"><strong>☁️ Bulut Mod</strong><span>Hesap ile giriş • Bulut kayıt ve canlı sıralama</span></button>
+  <button type="button" class="mode-card" onclick="startLocal()"><strong>📁 Yerel Mod</strong><span>Sadece bu cihaz • İnternet gerekmez</span></button>
+  <button type="button" class="mode-card" onclick="showAuth()"><strong>☁️ Bulut Mod</strong><span>Hesap ile giriş • Bulut kayıt ve canlı sıralama</span></button>
 </div>
 
 <!-- AUTH -->
@@ -784,13 +784,7 @@ if(window.firebase && typeof firebase.auth==='function'){
 let mode=null, currentUser=null, authMode='login', leaderboardUnsub=null;
 let authBusy=false, leaderboardData=[], cloudSaveTimer=null, cloudWriteBusy=false, localSaveTimer=null;
 let cloudClickPending=0, cloudClickBusy=false, cloudClickTimer=null, lastCloudTick=0;
-const CLOUD_CLICK_FLUSH_DELAY_MS=110;
-let renderFramePending=false;
-function scheduleRender(){
-  if(renderFramePending)return;
-  renderFramePending=true;
-  requestAnimationFrame(()=>{renderFramePending=false;render();});
-}
+const CLOUD_CLICK_FLUSH_DELAY_MS=150;
 
 const $ = id => document.getElementById(id);
 const $$ = sel => document.querySelectorAll(sel);
@@ -1330,59 +1324,9 @@ async function persistCloud(){
     return result;
   }finally{cloudWriteBusy=false;}
 }
-const LOCAL_SAVE_KEY='robuxClickerPro';
-const LOCAL_SAVE_BACKUP_KEY='robuxClickerPro.backup.v1';
-function isLocalSaveEmpty(saved){
-  if(!saved||typeof saved!=='object')return true;
-  const owned=saved.owned&&typeof saved.owned==='object'?saved.owned:{};
-  const ownedTotal=Object.values(owned).reduce((sum,n)=>sum+Math.max(0,Number(n)||0),0);
-  const pets=Array.isArray(saved.pets)?saved.pets.length:0;
-  return Math.max(0,Number(saved.money)||0)===0&&Math.max(0,Number(saved.total)||0)===0&&
-    Math.max(0,Number(saved.clicks)||0)===0&&Math.max(0,Number(saved.totalClicksEver)||0)===0&&
-    ownedTotal===0&&pets===0&&Math.max(0,Number(saved.rebirths)||0)===0&&Math.max(1,Number(saved.level)||1)<=1;
-}
-function readBestLocalSave(){
-  const candidates=[];
-  for(const key of [LOCAL_SAVE_KEY,LOCAL_SAVE_BACKUP_KEY,'robuxClickerPro.backup']){
-    try{
-      const raw=localStorage.getItem(key);
-      if(!raw)continue;
-      const saved=JSON.parse(raw);
-      if(saved&&typeof saved==='object'&&!Array.isArray(saved)&&
-        ['money','total','clicks','owned','pets','rebirths','level'].some(k=>k in saved))candidates.push({key,raw,saved});
-    }catch(err){console.warn('Yerel kayıt adayı okunamadı:',key,err);}
-  }
-  if(!candidates.length)return null;
-  const main=candidates.find(item=>item.key===LOCAL_SAVE_KEY);
-  if(main&&!isLocalSaveEmpty(main.saved))return main;
-  const backup=candidates.find(item=>item.key===LOCAL_SAVE_BACKUP_KEY)||candidates.find(item=>item.key==='robuxClickerPro.backup');
-  return backup||main||candidates[0];
-}
 function writeLocalSave(){
-  try{
-    const previous=localStorage.getItem(LOCAL_SAVE_KEY);
-    if(previous){
-      try{
-        const oldState=JSON.parse(previous);
-        if(oldState&&typeof oldState==='object'&&isLocalSaveEmpty(state)&&!isLocalSaveEmpty(oldState)){
-          // Never replace an existing progressed save with an empty/default state.
-          try{localStorage.setItem(LOCAL_SAVE_BACKUP_KEY,previous);}catch(backupErr){console.warn('Save backup could not be written.',backupErr);}
-          state={...defaultState(),...oldState,owned:oldState.owned||{},pets:oldState.pets||[],
-            achievements:oldState.achievements||{},settings:{...defaultState().settings,...(oldState.settings||{})},
-            equippedPets:Array.isArray(oldState.equippedPets)?oldState.equippedPets.slice(0,3):(oldState.equippedPet?[oldState.equippedPet]:[]),
-            redeemed:oldState.redeemed||[]};
-          migrateBalanceState(oldState);
-          scheduleRender();
-          return;
-        }
-        try{localStorage.setItem(LOCAL_SAVE_BACKUP_KEY,previous);}catch(backupErr){console.warn('Save backup could not be written.',backupErr);}
-      }catch(err){
-        // Preserve unreadable original bytes for recovery instead of deleting them.
-        try{localStorage.setItem(LOCAL_SAVE_BACKUP_KEY,previous);}catch{}
-      }
-    }
-    localStorage.setItem(LOCAL_SAVE_KEY,JSON.stringify(state));
-  }catch(e){console.warn('Local save failed',e);toast('Yerel kayıt alanı dolu olabilir.');}
+  try{localStorage.setItem('robuxClickerPro',JSON.stringify(state));}
+  catch(e){console.warn('Local save failed',e);toast('Yerel kayıt alanı dolu olabilir.');}
 }
 function save(force=false){
   state.lastSave=Date.now();
@@ -1815,9 +1759,6 @@ function queueCloudClick(){
   if(cloudClickPending>=120)return toast('Tıklamalar gönderiliyor, bir an bekle.');
   cloudClickPending++;
   animateOrbClick();
-  playSound('click');
-  // A short debounce groups only near-simultaneous taps; the old 1000 ms wait
-  // made the balance appear frozen until several clicks had accumulated.
   if(!cloudClickTimer)cloudClickTimer=setTimeout(()=>{cloudClickTimer=null;flushCloudClicks();},CLOUD_CLICK_FLUSH_DELAY_MS);
 }
 async function flushCloudClicks(){
@@ -1830,18 +1771,18 @@ async function flushCloudClicks(){
     applyServerProfile(result.profile);
     const rect=$('orb').getBoundingClientRect(),wrap=$('orbWrap').getBoundingClientRect();
     burst(rect.left+rect.width/2-wrap.left,rect.top-wrap.top+25,(result.crit?'CRIT ':'')+'+'+fmt(result.gain||0)+' R$',!!result.crit);
-    if(result.crit)playSound('crit');
+    if(result.crit)playSound('crit');else playSound('click');
     if(result.achievements?.length){
       const last=result.achievements[result.achievements.length-1];
       toast('🏅 Başarım açıldı! +'+fmt(last.reward)+' R$');
     }
-    scheduleRender();
+    render();
   }catch(err){
     console.error('Secure click failed',err);
     toast(err.message||'Tıklama sunucuya gönderilemedi.');
   }finally{
     cloudClickBusy=false;
-    if(cloudClickPending>0&&!cloudClickTimer)cloudClickTimer=setTimeout(()=>{cloudClickTimer=null;flushCloudClicks();},1000);
+    if(cloudClickPending>0&&!cloudClickTimer)cloudClickTimer=setTimeout(()=>{cloudClickTimer=null;flushCloudClicks();},CLOUD_CLICK_FLUSH_DELAY_MS);
   }
 }
 async function flushPendingCloudClicks(){
@@ -1866,7 +1807,7 @@ function doClick(e){
   state.questProgress=Math.min(50,state.questProgress+1);
   const rect=$('orb').getBoundingClientRect(),wrap=$('orbWrap').getBoundingClientRect();
   burst(rect.left+rect.width/2-wrap.left,rect.top-wrap.top+25,(isCrit?'CRIT ':'')+'+'+fmt(gain)+' R$',isCrit);
-  animateOrbClick();checkAchievements();scheduleRender();save();
+  animateOrbClick();checkAchievements();render();save();
 }
 async function buy(id){
   const it=ITEMS.find(x=>x.id===id);if(!it)return;
@@ -2479,16 +2420,11 @@ $('resetBtn').addEventListener('click',async()=>{
 function startLocal(){
   mode='local';
   try {
-    const bestSave=readBestLocalSave();
-    if(bestSave){
-      const s=bestSave.saved;
-      state={...defaultState(),...s,owned:s.owned||{},pets:s.pets||[],achievements:s.achievements||{},
-        settings:{...defaultState().settings,...(s.settings||{})},
-        equippedPets:Array.isArray(s.equippedPets)?s.equippedPets.slice(0,3):(s.equippedPet?[s.equippedPet]:[]),
-        redeemed:s.redeemed||[]};
+    const raw = localStorage.getItem('robuxClickerPro');
+    if(raw){
+      const s = JSON.parse(raw);
+      state = {...defaultState(),...s, owned:s.owned||{}, pets:s.pets||[], achievements:s.achievements||{}, settings:{...defaultState().settings,...(s.settings||{})}, equippedPets:Array.isArray(s.equippedPets)?s.equippedPets.slice(0,3):(s.equippedPet?[s.equippedPet]:[]), redeemed:s.redeemed||[]};
       migrateBalanceState(s);
-      // If the backup is the richer copy, restore it to the primary key without deleting it.
-      if(bestSave.key!==LOCAL_SAVE_KEY)try{localStorage.setItem(LOCAL_SAVE_KEY,JSON.stringify(state));}catch(err){console.warn('Recovered save could not be copied to primary key.',err);}
     }
   } catch(e){}
   // offline
