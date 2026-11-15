@@ -266,7 +266,7 @@ body[data-theme="ocean"]{background:radial-gradient(ellipse at 12% 0%,#164d70 0,
 body[data-theme="nebula"]{background:radial-gradient(ellipse at 12% 0%,#4a2c78 0,transparent 36%),radial-gradient(ellipse at 90% 15%,#672c73 0,transparent 30%),linear-gradient(145deg,#10091d,#1b1030 52%,#0c1021);background-attachment:fixed}
 body[data-theme="ember"]{background:radial-gradient(ellipse at 12% 0%,#753324 0,transparent 36%),radial-gradient(ellipse at 90% 15%,#6b271c 0,transparent 30%),linear-gradient(145deg,#1a0b0b,#28120f 52%,#100d16);background-attachment:fixed}
 body[data-theme="emerald"]{background:radial-gradient(ellipse at 12% 0%,#155a4a 0,transparent 36%),radial-gradient(ellipse at 90% 15%,#1f5b45 0,transparent 30%),linear-gradient(145deg,#061610,#0a211b 52%,#08131b);background-attachment:fixed}
-/* NUMBER LADDER / VIGINTILLION ENDGAME */
+/* NUMBER LADDER / TRESVIGINTILLION ENDGAME */
 :root{--rank-accent:#ffd34e;--rank-accent-soft:#ffd34e22}
 #rank{border-color:var(--rank-accent);color:var(--rank-accent);box-shadow:0 0 18px var(--rank-accent-soft)}
 #rankUnitBadge{border-color:var(--rank-accent);color:var(--rank-accent);white-space:nowrap}
@@ -382,7 +382,7 @@ body[data-theme="emerald"]{background:radial-gradient(ellipse at 12% 0%,#155a4a 
 
 <!-- MODE -->
 <div id="modeOverlay" class="overlay">
-  <div class="brand" style="margin-bottom:6px"><div class="logo">R$</div><div class="brand-text">ROBUX CLICKER<small>X EDITION · SCRATCH-INSPIRED CLICKER • TRESVIGINTILLION ENDGAME</small></div></div>
+  <div class="brand" style="margin-bottom:6px"><div class="logo">R$</div><div class="brand-text">ROBUX CLICKER<small id="endgameBranding">X EDITION · SCRATCH-INSPIRED CLICKER • TRESVIGINTILLION ENDGAME</small></div></div>
   <button class="mode-card" onclick="startLocal()"><strong>📁 Yerel Mod</strong><span>Sadece bu cihaz • İnternet gerekmez</span></button>
   <button class="mode-card" onclick="showAuth()"><strong>☁️ Bulut Mod</strong><span>Hesap ile giriş • Bulut kayıt ve canlı sıralama</span></button>
 </div>
@@ -529,7 +529,7 @@ body[data-theme="emerald"]{background:radial-gradient(ellipse at 12% 0%,#155a4a 
         <button class="click-btn" id="openEggBtn" style="font-size:13px;padding:10px 18px;margin-top:8px">1 Yumurta Aç</button>
       </div>
       <p style="color:var(--muted);font-size:10px;margin-top:8px">1, 10, 100 veya istediğin sayıda yumurta aç. Fiyat rütbene göre artar, pet sayına göre artmaz. Tek seferde en fazla 1.000 yumurta açılabilir.</p>
-      <p style="color:var(--muted);font-size:10px;margin-top:4px">Common’dan Tresvigintilyon’a 20 pet nadirliği! Üç aktif petinin gücü birleşir.</p>
+      <p id="petEndgameHint" style="color:var(--muted);font-size:10px;margin-top:4px">Common’dan Tresvigintilyon’a 20 pet nadirliği! Üç aktif petinin gücü birleşir.</p>
     </div>
   </div>
   <div class="panel" id="fuseMachine" style="padding:16px;margin:14px 0;border:1px solid #8b72d8;background:linear-gradient(145deg,#211b3b,#10182d)">
@@ -564,7 +564,7 @@ body[data-theme="emerald"]{background:radial-gradient(ellipse at 12% 0%,#155a4a 
   <div class="ach-grid" id="achGrid"></div>
   <div class="panel rank-atlas-panel">
     <div class="section-title">🔢 SAYI VE RÜTBE ATLASI <span class="pill" id="rankAtlasCount">0 / 64</span></div>
-    <p class="rank-atlas-intro">Her yeni rütbe kalıcı ve özel bir yetenek açar. Son basamak 1 Tresvigintilyon R$ değerindedir.</p>
+    <p id="rankAtlasIntro" class="rank-atlas-intro">Her yeni rütbe kalıcı ve özel bir yetenek açar. Son basamak 1 Tresvigintilyon R$ değerindedir.</p>
     <div class="rank-atlas-grid" id="rankAtlas"></div>
   </div>
 
@@ -712,7 +712,7 @@ body[data-theme="emerald"]{background:radial-gradient(ellipse at 12% 0%,#155a4a 
 </section>
 
 </main>
-<footer>ROBUX CLICKER X · 73 RANKS · TRESVIGINTILLION ENDGAME · FAN-MADE · NOT AFFILIATED WITH ROBLOX CORPORATION · E-posta/şifre liderlik tablosunda yayınlanmaz.</footer>
+<footer id="gameFooter">ROBUX CLICKER X · 73 RANKS · TRESVIGINTILLION ENDGAME · FAN-MADE · NOT AFFILIATED WITH ROBLOX CORPORATION · E-posta/şifre liderlik tablosunda yayınlanmaz.</footer>
 </div>
 <nav class="nav-bottom" id="bottomNav">
   <button class="nav-btn active" data-sec="click"><span>👆</span>Tıkla</button>
@@ -736,6 +736,44 @@ const firebaseConfig={apiKey:"AIzaSyAtS69M-l2xAs0U_RB4f-9R1Tmfcsx6gw0",authDomai
 const SUPABASE_URL='https://pfzyxueduypesaqfwnrf.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_YzFzEqQC4BcKxguiauq2zQ_ULHBT42V';
 const SUPABASE_GAME_API=SUPABASE_URL+'/functions/v1/game-api';
+const GAME_RULES = Object.freeze({
+  version:5,
+  finishExponent:72,
+  finishValue:1e72,
+  finishNameEnglish:'TRESVIGINTILLION',
+  finishNameTurkish:'Tresvigintilyon',
+  rankCount:73,
+  upgradeTierCount:72,
+  perkRankCap:71,
+  economyMultiplierCap:1e12,
+  maxPets:250,
+  maxEggsPerOpen:1000,
+  petCount:70,
+  itemCount:205,
+  rarityCount:20,
+  numberUnitCount:24,
+  maxPurchaseMultiplier:2.5,
+  maxClickBatch:30,
+  maxClicksPerSecond:30,
+  maxDailyStreak:30,
+  offlineCapSeconds:43200,
+  offlineGainMultiplier:0.45,
+  offlineRankProgressMultiplier:0.12,
+  rankIncomeBonusPerLevel:0.015,
+  rebirthBonusPerLevel:0.05,
+  petBonusCap:1.8,
+  petRankBonusCap:0.5,
+  eggPetRankBonusPerLevel:0.08,
+  goldenClickChance:0.42,
+  goldenAutoChance:0.84,
+  goldenClickDurationMs:25000,
+  goldenAutoDurationMs:25000,
+  goldenAllDurationMs:30000,
+  goldenSpawnBaseMs:55000,
+  goldenSpawnJitterMs:45000,
+  goldenVisibleMs:12000
+});
+
 let auth=null, firebaseReady=false;
 if(window.firebase && typeof firebase.auth==='function'){
   try{
@@ -746,6 +784,13 @@ if(window.firebase && typeof firebase.auth==='function'){
 let mode=null, currentUser=null, authMode='login', leaderboardUnsub=null;
 let authBusy=false, leaderboardData=[], cloudSaveTimer=null, cloudWriteBusy=false, localSaveTimer=null;
 let cloudClickPending=0, cloudClickBusy=false, cloudClickTimer=null, lastCloudTick=0;
+const CLOUD_CLICK_FLUSH_DELAY_MS=110;
+let renderFramePending=false;
+function scheduleRender(){
+  if(renderFramePending)return;
+  renderFramePending=true;
+  requestAnimationFrame(()=>{renderFramePending=false;render();});
+}
 
 const $ = id => document.getElementById(id);
 const $$ = sel => document.querySelectorAll(sel);
@@ -778,8 +823,8 @@ const ITEMS = [
   {id:'offline',name:'Çevrimdışı Boost',icon:'💤',desc:'Çevrimdışı kazancını %50 artırır',cost:4000,type:'offline',power:0.5,tab:'boost'}
 ];
 
-// 75 yeni seviye yükseltmesi: 30 tıklama + 30 otomatik + 15 çarpan.
-// Her yeni rütbede 2 güçlü ana yükseltme; çift rütbelerde ek çarpan açılır.
+// 180 seviye yükseltmesi: 72 tıklama + 72 otomatik + 36 çarpan.
+// HTML ve Supabase tarafında aynı GAME_RULES kataloğu kullanılır.
 // Scratch'teki hızlı ve tatmin edici shop döngüsü korunur; tamamlama hedefi aktif oyunda yaklaşık 40-120 dakikadır.
 const UPGRADE_TIER_NAMES = [
   'Bakır','Bronz','Gümüş','Altın','Platin','Kristal','Elmas','Safir','Yakut','Zümrüt',
@@ -793,7 +838,7 @@ const HIGH_NUMBER_UNIT_NAMES = [
   {exp:57,name:'Octodecilyon'},{exp:60,name:'Novemdecilyon'},{exp:63,name:'Vigintilyon'},
   {exp:66,name:'Unvigintilyon'},{exp:69,name:'Duovigintilyon'},{exp:72,name:'Tresvigintilyon'}
 ];
-const UPGRADE_TIER_COUNT = 72;
+const UPGRADE_TIER_COUNT = GAME_RULES.upgradeTierCount;
 while(UPGRADE_TIER_NAMES.length<UPGRADE_TIER_COUNT){
   const tier=UPGRADE_TIER_NAMES.length+1;
   const unitExp=Math.floor(tier/3)*3;
@@ -931,7 +976,7 @@ const ACHIEVEMENTS = [
   {id:'lv10',name:'Seviye 10',desc:'Seviye 10 ol',check:s=>s.level>=10,reward:3000},
   {id:'lv25',name:'Seviye 25',desc:'Seviye 25 ol',check:s=>s.level>=25,reward:25000}
 ];
-// Her 10 katlık basamak ayrı rütbe açar; son hedef 1 Tresvigintilyon (10^63).
+// Her 10 katlık basamak ayrı rütbe açar; son hedef ve tüm oyun verileri GAME_RULES üzerinden eşzamanlanır.
 const NUMBER_UNITS = [
   {exp:3,name:'Bin',suffix:'Bin'},
   {exp:6,name:'Milyon',suffix:'Milyon'},
@@ -990,7 +1035,7 @@ function rankUnitForExponent(exp){
 }
 function rankPerkForIndex(index){
   if(index===0)return {type:'starter',value:0,label:'Başlangıç bonusu',description:'Temel tıklama gücü ve ilk yükseltmeler.'};
-  if(index===RANK_NAMES.length-1)return {type:'final',value:0.10,label:'Tresvigintilyon Tahtı',description:'Oyunu bitir: özel Tresvigintilyon aurası ve final rozeti.'};
+  if(index===RANK_NAMES.length-1)return {type:'final',value:0.10,label:`${GAME_RULES.finishNameTurkish} Tahtı`,description:`Oyunu bitir: özel ${GAME_RULES.finishNameTurkish} aurası ve final rozeti.`};
   const template=RANK_PERK_TYPES[(index-1)%RANK_PERK_TYPES.length];
   const cycle=Math.floor((index-1)/RANK_PERK_TYPES.length);
   const value=template.base+template.step*cycle;
@@ -1001,12 +1046,56 @@ const RANKS = RANK_NAMES.map((name,index)=>({
   name,value:index===0?0:Math.pow(10,index),icon:RANK_ICONS[index%RANK_ICONS.length],color:RANK_COLORS[index%RANK_COLORS.length],
   unit:rankUnitForExponent(index),perk:rankPerkForIndex(index)
 }));
-const GAME_FINISH_VALUE = 1e72;
+const GAME_FINISH_VALUE = GAME_RULES.finishValue;
 const RARITY_UNLOCK_RANK = {common:0,uncommon:0,rare:0,epic:0,legendary:0,mythic:0,secret:0,celestial:0,divine:15,eternal:18,infinite:24,nonillion:30,vigintillion:33,unvigintillion:36,duovigintillion:42,tresvigintillion:48,quattuorvigintillion:54,quinvigintillion:60,sexvigintillion:66,septemvigintillion:72};
+
+function fnv1a64(value){
+  let hash=0xcbf29ce484222325n;
+  const prime=0x100000001b3n;
+  for(let index=0;index<value.length;index++)hash=BigInt.asUintN(64,(hash^BigInt(value.charCodeAt(index)))*prime);
+  return hash.toString(16).padStart(16,'0');
+}
+const GAME_RULES_FINGERPRINT = fnv1a64(JSON.stringify({
+  rules:Object.keys(GAME_RULES).sort().map(key=>[key,GAME_RULES[key]]),
+  rankThresholds:RANKS.map((rank,index)=>[index,rank.value]),
+  numberUnits:NUMBER_UNITS.map(unit=>[unit.exp,unit.name,unit.suffix]),
+  items:ITEMS.map(item=>[item.id,item.type,Number(item.cost),Number(item.power),Number(item.unlockRank||0)]),
+  pets:PET_POOL.map(pet=>[pet.name,pet.icon,pet.rarity,Number(pet.min),Number(pet.max),Number(pet.unlockRank||0)]),
+  rarities:RARITY_CHANCE.map(item=>[item.r,item.w,Number(RARITY_UNLOCK_RANK[item.r]??0)]),
+}));
+
+function assertGameRulesAlignment(){
+  const finalUnit=NUMBER_UNITS.find(unit=>unit.exp===GAME_RULES.finishExponent);
+  if(GAME_FINISH_VALUE!==GAME_RULES.finishValue||GAME_RULES.finishValue!==10**GAME_RULES.finishExponent
+    ||GAME_RULES.finishExponent+1!==GAME_RULES.rankCount||!finalUnit||finalUnit.name!==GAME_RULES.finishNameTurkish
+    ||RANKS.length!==GAME_RULES.rankCount||RANKS[RANKS.length-1]?.value!==GAME_RULES.finishValue
+    ||UPGRADE_TIER_COUNT!==GAME_RULES.upgradeTierCount||PET_POOL.length!==GAME_RULES.petCount
+    ||ITEMS.length!==GAME_RULES.itemCount||RARITY_CHANCE.length!==GAME_RULES.rarityCount
+    ||NUMBER_UNITS.length!==GAME_RULES.numberUnitCount
+    ||rankUnitForExponent(GAME_RULES.finishExponent)!==GAME_RULES.finishNameTurkish
+    ||RANKS[GAME_RULES.finishExponent]?.value!==GAME_RULES.finishValue
+    ||GAME_RULES_FINGERPRINT.length!==16){
+    throw new Error('Oyun verileri aynı GAME_RULES sürümünde değil. index.html dosyasının tamamını güncelle.');
+  }
+  const branding=document.getElementById('endgameBranding');
+  if(branding)branding.textContent=`X EDITION · SCRATCH-INSPIRED CLICKER • ${GAME_RULES.finishNameEnglish} ENDGAME`;
+  const footer=document.getElementById('gameFooter');
+  if(footer)footer.textContent=`ROBUX CLICKER X · ${GAME_RULES.rankCount} RANKS · ${GAME_RULES.finishNameEnglish} ENDGAME · FAN-MADE · NOT AFFILIATED WITH ROBLOX CORPORATION · E-posta/şifre liderlik tablosunda yayınlanmaz.`;
+  const goal=document.getElementById('finalGoalText');
+  if(goal)goal.textContent=`Oyunu bitirmek için kasanda en az 1 ${GAME_RULES.finishNameTurkish} R$ tutmalısın.`;
+  const shopHint=document.getElementById('shopEndgameHint');
+  if(shopHint)shopHint.textContent=`Her rütbede yeni yükseltmeler, belirgin güç artışı ve ${GAME_RULES.finishNameTurkish} hedefi.`;
+  const petHint=document.getElementById('petEndgameHint');
+  if(petHint)petHint.textContent=`Common’dan ${GAME_RULES.finishNameTurkish}’a 20 pet nadirliği! Üç aktif petinin gücü birleşir.`;
+  const rankHint=document.getElementById('rankAtlasIntro');
+  if(rankHint)rankHint.textContent=`Her yeni rütbe kalıcı ve özel bir yetenek açar. Son basamak 1 ${GAME_RULES.finishNameTurkish} R$ değerindedir.`;
+}
+assertGameRulesAlignment();
+
 // ========== STATE ==========
-const BALANCE_VERSION = 4;
-const MAX_PURCHASE_MULTIPLIER = 2.5;
-const MAX_ECONOMY_MULTIPLIER = 4.0;
+const BALANCE_VERSION = GAME_RULES.version;
+const MAX_PURCHASE_MULTIPLIER = GAME_RULES.maxPurchaseMultiplier;
+const MAX_ECONOMY_MULTIPLIER = GAME_RULES.economyMultiplierCap;
 const defaultState = () => ({
   balanceVersion:BALANCE_VERSION, money:0, total:0, clicks:0, best:0, owned:{}, multi:1,
   pets:[], equippedPet:null, equippedPets:[], rebirths:0, level:1, xp:0,
@@ -1018,7 +1107,7 @@ const defaultState = () => ({
 let state = defaultState();
 let activeTab = 'all';
 let toastTimer = null;
-const MAX_EGGS_PER_OPEN = 1000;
+const MAX_EGGS_PER_OPEN = GAME_RULES.maxEggsPerOpen;
 let eggOpening = false;
 let fuseSelection = [];
 // ========== HELPERS ==========
@@ -1028,7 +1117,7 @@ const fmt = value => {
   if(n<1000)return Math.floor(n).toLocaleString('tr-TR');
   let exp=Math.max(3,Math.floor(Math.log10(n)/3)*3);
   let scaled=n/Math.pow(10,exp);
-  if(scaled>=999.5&&exp<30){exp+=3;scaled=n/Math.pow(10,exp);}
+  if(scaled>=999.5&&exp<GAME_RULES.finishExponent){exp+=3;scaled=n/Math.pow(10,exp);}
   const unit=NUMBER_UNITS.find(u=>u.exp===exp);
   if(!unit)return n.toExponential(2).replace('.',',');
   const digits=scaled>=100?0:(scaled>=10?1:2);
@@ -1047,8 +1136,11 @@ function rebuildOwnedMultiplier(owned={}){
 function migrateBalanceState(saved={}){
   const version=Number(saved.balanceVersion)||0;
   if(version<3) state.multi=rebuildOwnedMultiplier(state.owned||{});
-  if(version<4) state.gameCompleted=false;
+  state.money=Math.min(GAME_FINISH_VALUE,Math.max(0,Number(state.money)||0));
+  state.total=Math.max(state.money,Number(state.total)||0);
+  state.best=Math.min(GAME_FINISH_VALUE,Math.max(state.money,Number(state.best)||0));
   state.multi=Math.max(1,Math.min(MAX_PURCHASE_MULTIPLIER,Number(state.multi)||1));
+  state.gameCompleted=state.money>=GAME_FINISH_VALUE;
   state.balanceVersion=BALANCE_VERSION;
 }
 const rankIndexFor = total => {
@@ -1059,22 +1151,22 @@ const rankIndexFor = total => {
 const currentRankIndex = () => rankIndexFor(state.total);
 const rankPerkTotals = (rankIndex=currentRankIndex()) => {
   const totals={click:0,auto:0,pet:0,luck:0,crit:0,discount:0};
-  for(let i=1;i<=Math.min(rankIndex,RANK_NAMES.length-2);i++){
+  for(let i=1;i<=Math.min(rankIndex,GAME_RULES.perkRankCap);i++){
     const template=RANK_PERK_TYPES[(i-1)%RANK_PERK_TYPES.length];
     const cycle=Math.floor((i-1)/RANK_PERK_TYPES.length);
     totals[template.type]+=template.base+template.step*cycle;
   }
   return totals;
 };
-const rankMultiplier = () => 1 + currentRankIndex()*0.015;
+const rankMultiplier = () => 1 + currentRankIndex()*GAME_RULES.rankIncomeBonusPerLevel;
 const weeklyMultiplier = () => new Date().getDay()===5 ? 1.5 : 1;
 function temporaryPowerMultiplier(type){
   if(!state.boostUntil || state.boostUntil<=Date.now()) return 1;
   if(state.boostType==='all' || state.boostType===type) return Math.max(1,Number(state.boostMultiplier)||2);
   return 1;
 }
-const rebirthMultiplier = () => 1 + Math.max(0,Number(state.rebirths)||0)*0.05;
-const economyMultiplier = () => Math.min(1e12,
+const rebirthMultiplier = () => 1 + Math.max(0,Number(state.rebirths)||0)*GAME_RULES.rebirthBonusPerLevel;
+const economyMultiplier = () => Math.min(GAME_RULES.economyMultiplierCap,
   Math.max(1,state.multi||1) * rebirthMultiplier() * (1+petBonus()) * rankMultiplier()
 );
 function applyRankTheme(index=currentRankIndex()){
@@ -1128,7 +1220,7 @@ const petBonus = () => {
   const ids = equippedPetIds();
   const raw=state.pets.filter(p=>ids.includes(p.id)).reduce((sum,p)=>sum+Math.max(0,Number(p.power)||0)/100,0);
   // Güçlü ve nadir petler fark yaratır; ancak üç pet birlikte ekonomiyi patlatamaz.
-  return Math.min(1.8,Math.log10(1+raw)*0.45) * (1+Math.min(0.5,rankPerkTotals().pet));
+  return Math.min(GAME_RULES.petBonusCap,Math.log10(1+raw)*0.45) * (1+Math.min(GAME_RULES.petRankBonusCap,rankPerkTotals().pet));
 };
 const clickPower = () => {
   const base = 1 + ITEMS.filter(x=>x.type==='click').reduce((s,x)=>s+count(x.id)*x.power,0);
@@ -1155,19 +1247,25 @@ const eggTierName = () => {
   return unit+' Yumurtası';
 };
 function add(n, xpGain=true){
-  state.money += n;
-  state.total += n;
-  state.best = Math.max(state.best, state.money);
-  if(xpGain && n>0){
-    const xp = Math.max(1, Math.floor(Math.log10(n+1)*2));
-    state.xp += xp;
-    while(state.xp >= xpNeeded()){
-      state.xp -= xpNeeded();
+  const requested=Math.max(0,Number(n)||0);
+  const previousMoney=Math.max(0,Number(state.money)||0);
+  const previousTotal=Math.max(previousMoney,Number(state.total)||0);
+  const gain=Math.max(0,Math.min(requested,GAME_FINISH_VALUE-previousMoney));
+  state.money=Math.min(GAME_FINISH_VALUE,previousMoney+gain);
+  state.total=previousTotal+gain;
+  state.best=Math.min(GAME_FINISH_VALUE,Math.max(state.best,state.money));
+  if(xpGain&&gain>0){
+    const xp=Math.max(1,Math.floor(Math.log10(gain+1)*2));
+    state.xp+=xp;
+    while(state.xp>=xpNeeded()){
+      state.xp-=xpNeeded();
       state.level++;
       toast(`⭐ Seviye ${state.level}!`);
       playSound('level');
     }
   }
+  state.gameCompleted=state.money>=GAME_FINISH_VALUE;
+  return gain;
 }
 function xpNeeded(){ return Math.floor(80 * Math.pow(1.35, state.level-1)); }
 function dailyQuestReward(){
@@ -1209,11 +1307,14 @@ async function gameApi(action,payload={}){
       'apikey':SUPABASE_PUBLISHABLE_KEY,
       'Authorization':'Bearer '+token
     },
-    body:JSON.stringify({action,...payload})
+    body:JSON.stringify({rulesVersion:GAME_RULES.version,rulesFingerprint:GAME_RULES_FINGERPRINT,action,...payload})
   });
   let data={};
   try{data=await response.json();}catch{}
   if(!response.ok) throw new Error(data.error||('Sunucu hatası ('+response.status+').'));
+  if(data.rulesVersion!==GAME_RULES.version||data.rulesFingerprint!==GAME_RULES_FINGERPRINT){
+    throw new Error('Bulut oyun verileri eşleşmiyor. index.html ve Supabase index.ts dosyalarının ikisini de aynı sürümle dağıt.');
+  }
   return data;
 }
 async function persistCloud(){
@@ -1229,9 +1330,59 @@ async function persistCloud(){
     return result;
   }finally{cloudWriteBusy=false;}
 }
+const LOCAL_SAVE_KEY='robuxClickerPro';
+const LOCAL_SAVE_BACKUP_KEY='robuxClickerPro.backup.v1';
+function isLocalSaveEmpty(saved){
+  if(!saved||typeof saved!=='object')return true;
+  const owned=saved.owned&&typeof saved.owned==='object'?saved.owned:{};
+  const ownedTotal=Object.values(owned).reduce((sum,n)=>sum+Math.max(0,Number(n)||0),0);
+  const pets=Array.isArray(saved.pets)?saved.pets.length:0;
+  return Math.max(0,Number(saved.money)||0)===0&&Math.max(0,Number(saved.total)||0)===0&&
+    Math.max(0,Number(saved.clicks)||0)===0&&Math.max(0,Number(saved.totalClicksEver)||0)===0&&
+    ownedTotal===0&&pets===0&&Math.max(0,Number(saved.rebirths)||0)===0&&Math.max(1,Number(saved.level)||1)<=1;
+}
+function readBestLocalSave(){
+  const candidates=[];
+  for(const key of [LOCAL_SAVE_KEY,LOCAL_SAVE_BACKUP_KEY,'robuxClickerPro.backup']){
+    try{
+      const raw=localStorage.getItem(key);
+      if(!raw)continue;
+      const saved=JSON.parse(raw);
+      if(saved&&typeof saved==='object'&&!Array.isArray(saved)&&
+        ['money','total','clicks','owned','pets','rebirths','level'].some(k=>k in saved))candidates.push({key,raw,saved});
+    }catch(err){console.warn('Yerel kayıt adayı okunamadı:',key,err);}
+  }
+  if(!candidates.length)return null;
+  const main=candidates.find(item=>item.key===LOCAL_SAVE_KEY);
+  if(main&&!isLocalSaveEmpty(main.saved))return main;
+  const backup=candidates.find(item=>item.key===LOCAL_SAVE_BACKUP_KEY)||candidates.find(item=>item.key==='robuxClickerPro.backup');
+  return backup||main||candidates[0];
+}
 function writeLocalSave(){
-  try{localStorage.setItem('robuxClickerPro',JSON.stringify(state));}
-  catch(e){console.warn('Local save failed',e);toast('Yerel kayıt alanı dolu olabilir.');}
+  try{
+    const previous=localStorage.getItem(LOCAL_SAVE_KEY);
+    if(previous){
+      try{
+        const oldState=JSON.parse(previous);
+        if(oldState&&typeof oldState==='object'&&isLocalSaveEmpty(state)&&!isLocalSaveEmpty(oldState)){
+          // Never replace an existing progressed save with an empty/default state.
+          try{localStorage.setItem(LOCAL_SAVE_BACKUP_KEY,previous);}catch(backupErr){console.warn('Save backup could not be written.',backupErr);}
+          state={...defaultState(),...oldState,owned:oldState.owned||{},pets:oldState.pets||[],
+            achievements:oldState.achievements||{},settings:{...defaultState().settings,...(oldState.settings||{})},
+            equippedPets:Array.isArray(oldState.equippedPets)?oldState.equippedPets.slice(0,3):(oldState.equippedPet?[oldState.equippedPet]:[]),
+            redeemed:oldState.redeemed||[]};
+          migrateBalanceState(oldState);
+          scheduleRender();
+          return;
+        }
+        try{localStorage.setItem(LOCAL_SAVE_BACKUP_KEY,previous);}catch(backupErr){console.warn('Save backup could not be written.',backupErr);}
+      }catch(err){
+        // Preserve unreadable original bytes for recovery instead of deleting them.
+        try{localStorage.setItem(LOCAL_SAVE_BACKUP_KEY,previous);}catch{}
+      }
+    }
+    localStorage.setItem(LOCAL_SAVE_KEY,JSON.stringify(state));
+  }catch(e){console.warn('Local save failed',e);toast('Yerel kayıt alanı dolu olabilir.');}
 }
 function save(force=false){
   state.lastSave=Date.now();
@@ -1605,7 +1756,7 @@ function scheduleGoldenRobux(){
   if(!mode)return;
   const delay=mode==='cloud'&&Number(state.goldenNextAt)>0
     ?Math.max(0,Number(state.goldenNextAt)-Date.now())
-    :55000+Math.random()*45000;
+    :GAME_RULES.goldenSpawnBaseMs+Math.random()*GAME_RULES.goldenSpawnJitterMs;
   goldenSpawnTimer=setTimeout(showGoldenRobux,delay);
 }
 function showGoldenRobux(){
@@ -1622,7 +1773,7 @@ function showGoldenRobux(){
   coin.style.right=(8+Math.random()*12)+'px';
   const visibleFor=mode==='cloud'&&Number(state.goldenExpiresAt)>0
     ?Math.max(500,Number(state.goldenExpiresAt)-Date.now())
-    :12000;
+    :GAME_RULES.goldenVisibleMs;
   goldenExpireTimer=setTimeout(async()=>{
     goldenVisible=false;coin.classList.add('hidden');
     if(mode==='cloud'){
@@ -1650,9 +1801,9 @@ async function collectGoldenRobux(){
     return;
   }
   const roll=Math.random();
-  if(roll<0.42){state.boostType='click';state.boostMultiplier=2;state.boostUntil=Date.now()+25000;toast('🪙 Altın Robux! 25 saniye ×2 TIKLAMA!');}
-  else if(roll<0.84){state.boostType='auto';state.boostMultiplier=2;state.boostUntil=Date.now()+25000;toast('🪙 Altın Robux! 25 saniye ×2 OTOMATİK GELİR!');}
-  else{state.boostType='all';state.boostMultiplier=1.5;state.boostUntil=Date.now()+30000;toast('🪙 Altın Robux! 30 saniye ×1,5 TÜM KAZANÇLAR!');}
+  if(roll<GAME_RULES.goldenClickChance){state.boostType='click';state.boostMultiplier=2;state.boostUntil=Date.now()+GAME_RULES.goldenClickDurationMs;toast('🪙 Altın Robux! 25 saniye ×2 TIKLAMA!');}
+  else if(roll<GAME_RULES.goldenAutoChance){state.boostType='auto';state.boostMultiplier=2;state.boostUntil=Date.now()+GAME_RULES.goldenAutoDurationMs;toast('🪙 Altın Robux! 25 saniye ×2 OTOMATİK GELİR!');}
+  else{state.boostType='all';state.boostMultiplier=1.5;state.boostUntil=Date.now()+GAME_RULES.goldenAllDurationMs;toast('🪙 Altın Robux! 30 saniye ×1,5 TÜM KAZANÇLAR!');}
   playSound('level');updateBonusUI();render();save();scheduleGoldenRobux();
 }
 // ========== CORE ACTIONS ==========
@@ -1664,24 +1815,27 @@ function queueCloudClick(){
   if(cloudClickPending>=120)return toast('Tıklamalar gönderiliyor, bir an bekle.');
   cloudClickPending++;
   animateOrbClick();
-  if(!cloudClickTimer)cloudClickTimer=setTimeout(()=>{cloudClickTimer=null;flushCloudClicks();},1000);
+  playSound('click');
+  // A short debounce groups only near-simultaneous taps; the old 1000 ms wait
+  // made the balance appear frozen until several clicks had accumulated.
+  if(!cloudClickTimer)cloudClickTimer=setTimeout(()=>{cloudClickTimer=null;flushCloudClicks();},CLOUD_CLICK_FLUSH_DELAY_MS);
 }
 async function flushCloudClicks(){
   if(cloudClickBusy||cloudClickPending<=0||mode!=='cloud')return;
   cloudClickBusy=true;
-  const count=Math.min(30,cloudClickPending);
+  const count=Math.min(GAME_RULES.maxClickBatch,cloudClickPending);
   cloudClickPending-=count;
   try{
     const result=await gameApi('click',{count});
     applyServerProfile(result.profile);
     const rect=$('orb').getBoundingClientRect(),wrap=$('orbWrap').getBoundingClientRect();
     burst(rect.left+rect.width/2-wrap.left,rect.top-wrap.top+25,(result.crit?'CRIT ':'')+'+'+fmt(result.gain||0)+' R$',!!result.crit);
-    if(result.crit)playSound('crit');else playSound('click');
+    if(result.crit)playSound('crit');
     if(result.achievements?.length){
       const last=result.achievements[result.achievements.length-1];
       toast('🏅 Başarım açıldı! +'+fmt(last.reward)+' R$');
     }
-    render();
+    scheduleRender();
   }catch(err){
     console.error('Secure click failed',err);
     toast(err.message||'Tıklama sunucuya gönderilemedi.');
@@ -1708,11 +1862,11 @@ function doClick(e){
     playSound('crit');
   }else playSound('click');
   if(count('lucky'))gain+=Math.floor(gain*(.03+Math.random()*.08));
-  add(gain);state.clicks++;state.totalClicksEver++;
+  gain=add(gain);state.clicks++;state.totalClicksEver++;
   state.questProgress=Math.min(50,state.questProgress+1);
   const rect=$('orb').getBoundingClientRect(),wrap=$('orbWrap').getBoundingClientRect();
   burst(rect.left+rect.width/2-wrap.left,rect.top-wrap.top+25,(isCrit?'CRIT ':'')+'+'+fmt(gain)+' R$',isCrit);
-  animateOrbClick();checkAchievements();render();save();
+  animateOrbClick();checkAchievements();scheduleRender();save();
 }
 async function buy(id){
   const it=ITEMS.find(x=>x.id===id);if(!it)return;
@@ -1762,6 +1916,9 @@ async function openEgg(count=null){
   if(!Number.isSafeInteger(count)||count<1||count>MAX_EGGS_PER_OPEN){
     return toast(`1 ile ${fmt(MAX_EGGS_PER_OPEN)} arasında geçerli bir yumurta sayısı gir.`);
   }
+  if(state.pets.length+count>GAME_RULES.maxPets){
+    return toast(`En fazla ${GAME_RULES.maxPets} pet saklayabilirsin. Önce pet sat veya koleksiyonunu düzenle.`);
+  }
   if(mode==='cloud')await flushPendingCloudClicks();
   const price=eggPrice();
   const totalPrice=price*count;
@@ -1788,7 +1945,7 @@ async function openEgg(count=null){
       const pool=PET_POOL.filter(p=>p.rarity===rarity&&(p.unlockRank||0)<=currentRankIndex());
       const base=pool[Math.floor(Math.random()*pool.length)]||PET_POOL[0];
       const rawPower=Math.floor(base.min+Math.random()*(base.max-base.min+1));
-      const power=Math.floor(rawPower*(1+currentRankIndex()*0.08));
+      const power=Math.floor(rawPower*(1+currentRankIndex()*GAME_RULES.eggPetRankBonusPerLevel));
       const pet={id:'p'+Date.now()+Math.random().toString(36).slice(2,9),name:base.name,baseName:base.name,icon:base.icon,rarity:base.rarity,power,createdAt:Date.now(),fuseLevel:0};
       state.pets.push(pet);opened.push(pet);
       if(!Array.isArray(state.equippedPets))state.equippedPets=state.equippedPet?[state.equippedPet]:[];
@@ -1913,7 +2070,7 @@ async function claimDaily(){
   const day = 86400000;
   if(now - state.dailyLast < day*0.9) return toast('Yarın tekrar gel!');
   const streak = (now - state.dailyLast < day*1.5) ? state.dailyStreak+1 : 1;
-  state.dailyStreak = Math.min(streak,30);
+  state.dailyStreak = Math.min(streak,GAME_RULES.maxDailyStreak);
   state.dailyLast = now;
   const reward = Math.max(200 + state.dailyStreak*50 + state.level*15,Math.floor(clickPower()*18+autoPower()*45));
   add(reward);
@@ -2150,12 +2307,12 @@ function render(){
     $('rankText').textContent=fmt(left)+' R$ daha → '+nextR.name;
     $('rankBar').style.width=Math.min(100,((state.total-rank.value)/(nextR.value-rank.value))*100)+'%';
   }else{
-    $('rankText').textContent='SON RÜTBE AÇILDI! Kasanda 1 Tresvigintilyon R$ tutarak oyunu bitir. 🏆';
+    $('rankText').textContent=`SON RÜTBE AÇILDI! Kasanda 1 ${GAME_RULES.finishNameTurkish} R$ tutarak oyunu bitir. 🏆`;
     $('rankBar').style.width='100%';
   }
   const finalProgress=Math.min(100,(state.money/GAME_FINISH_VALUE)*100);
   $('finalGoalBar').style.width=finalProgress+'%';
-  $('finalGoalText').textContent=state.money>=GAME_FINISH_VALUE?'🎉 Hedef tamamlandı! Kasanda en az 1 Tresvigintilyon R$ var.':`Kasanda ${fmt(state.money)} / 1 Tresvigintilyon R$ · ${finalProgress.toFixed(6).replace('.',',')}% tamamlandı.`;
+  $('finalGoalText').textContent=state.money>=GAME_FINISH_VALUE?`🎉 Hedef tamamlandı! Kasanda en az 1 ${GAME_RULES.finishNameTurkish} R$ var.`:`Kasanda ${fmt(state.money)} / 1 ${GAME_RULES.finishNameTurkish} R$ · ${finalProgress.toFixed(6).replace('.',',')}% tamamlandı.`;
   applyRankTheme(rankIdx);
   applyGameTheme();
   updateBonusUI();
@@ -2178,7 +2335,7 @@ function render(){
   if($('sec-rebirth').classList.contains('active')) renderLB();
   if(state.money>=GAME_FINISH_VALUE&&!state.gameCompleted){
     state.gameCompleted=true;
-    $('modalBody').innerHTML=`<h2 style="text-align:center">TRESVİGİNTİLYON BAŞARISI!</h2><div class="victory-mark">🏆</div><p class="victory-sub">Tebrikler! Kasanda en az <strong>1 Tresvigintilyon R$</strong> biriktirdin ve Robux Clicker X'i tamamladın. Artık Tresvigintilyon Tanrısı rütbesindesin.</p><button class="click-btn" style="width:100%;margin-top:16px" onclick="closeModal()">EFSANE! 🎉</button>`;
+    $('modalBody').innerHTML=`<h2 style="text-align:center">${GAME_RULES.finishNameTurkish.toLocaleUpperCase('tr-TR')} BAŞARISI!</h2><div class="victory-mark">🏆</div><p class="victory-sub">Tebrikler! Kasanda en az <strong>1 ${GAME_RULES.finishNameTurkish} R$</strong> biriktirdin ve Robux Clicker X'i tamamladın. Artık ${GAME_RULES.finishNameTurkish} Tanrısı rütbesindesin.</p><button class="click-btn" style="width:100%;margin-top:16px" onclick="closeModal()">EFSANE! 🎉</button>`;
     $('modal').classList.add('show');
     playSound('rebirth');
     Promise.resolve(save(true)).catch(()=>{});
@@ -2322,24 +2479,29 @@ $('resetBtn').addEventListener('click',async()=>{
 function startLocal(){
   mode='local';
   try {
-    const raw = localStorage.getItem('robuxClickerPro');
-    if(raw){
-      const s = JSON.parse(raw);
-      state = {...defaultState(),...s, owned:s.owned||{}, pets:s.pets||[], achievements:s.achievements||{}, settings:{...defaultState().settings,...(s.settings||{})}, equippedPets:Array.isArray(s.equippedPets)?s.equippedPets.slice(0,3):(s.equippedPet?[s.equippedPet]:[]), redeemed:s.redeemed||[]};
+    const bestSave=readBestLocalSave();
+    if(bestSave){
+      const s=bestSave.saved;
+      state={...defaultState(),...s,owned:s.owned||{},pets:s.pets||[],achievements:s.achievements||{},
+        settings:{...defaultState().settings,...(s.settings||{})},
+        equippedPets:Array.isArray(s.equippedPets)?s.equippedPets.slice(0,3):(s.equippedPet?[s.equippedPet]:[]),
+        redeemed:s.redeemed||[]};
       migrateBalanceState(s);
+      // If the backup is the richer copy, restore it to the primary key without deleting it.
+      if(bestSave.key!==LOCAL_SAVE_KEY)try{localStorage.setItem(LOCAL_SAVE_KEY,JSON.stringify(state));}catch(err){console.warn('Recovered save could not be copied to primary key.',err);}
     }
   } catch(e){}
   // offline
   (function(){
     const now = Date.now();
-    const diff = Math.min(now - (state.lastSave||now), 1000*60*60*12);
+    const diff = Math.min(now - (state.lastSave||now), GAME_RULES.offlineCapSeconds*1000);
     if(diff > 30000){
       const sec = Math.floor(diff/1000);
-      const offlineRaw = autoPower() * sec * offlineBonus() * 0.45;
+      const offlineRaw = autoPower() * sec * offlineBonus() * GAME_RULES.offlineGainMultiplier;
       const rankNow = currentRankIndex();
       const nextRank = RANKS[rankNow+1];
       const remaining = nextRank ? Math.max(0,nextRank.value-state.total) : Math.max(0,GAME_FINISH_VALUE-state.money);
-      const gain = Math.floor(Math.min(offlineRaw,remaining*0.12));
+      const gain = Math.floor(Math.min(offlineRaw,remaining*GAME_RULES.offlineRankProgressMultiplier));
       if(gain > 0){
         add(gain, false);
         $('offlineText').textContent = `Çevrimdışı ${Math.floor(sec/60)} dk · +${fmt(gain)} R$ kazandın!`;
