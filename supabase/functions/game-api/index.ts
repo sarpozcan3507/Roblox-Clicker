@@ -3,16 +3,51 @@ import { createRemoteJWKSet, jwtVerify } from 'npm:jose@6.2.15';
 
 const FIREBASE_PROJECT_ID = 'roblox-clicker07';
 const FIREBASE_ISSUER = `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`;
+const GAME_RULES = Object.freeze({
+  version:5,
+  finishExponent:72,
+  finishValue:1e72,
+  finishNameEnglish:'TRESVIGINTILLION',
+  finishNameTurkish:'Tresvigintilyon',
+  rankCount:73,
+  upgradeTierCount:72,
+  perkRankCap:71,
+  economyMultiplierCap:1e12,
+  maxPets:250,
+  maxEggsPerOpen:1000,
+  petCount:70,
+  itemCount:205,
+  rarityCount:20,
+  numberUnitCount:24,
+  maxPurchaseMultiplier:2.5,
+  maxClickBatch:30,
+  maxClicksPerSecond:30,
+  maxDailyStreak:30,
+  offlineCapSeconds:43200,
+  offlineGainMultiplier:0.45,
+  offlineRankProgressMultiplier:0.12,
+  rankIncomeBonusPerLevel:0.015,
+  rebirthBonusPerLevel:0.05,
+  petBonusCap:1.8,
+  petRankBonusCap:0.5,
+  eggPetRankBonusPerLevel:0.08,
+  goldenClickChance:0.42,
+  goldenAutoChance:0.84,
+  goldenClickDurationMs:25000,
+  goldenAutoDurationMs:25000,
+  goldenAllDurationMs:30000,
+  goldenSpawnBaseMs:55000,
+  goldenSpawnJitterMs:45000,
+  goldenVisibleMs:12000,
+} as const);
+
 const FIREBASE_JWKS = createRemoteJWKSet(
   new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'),
 );
-// 1 Vigintilyon = 10^63. Keep this limit aligned with the browser game.
-const MAX_BALANCE = 1e72;
-const MAX_PURCHASE_MULTIPLIER = 2.5;
-const MAX_ECONOMY_MULTIPLIER = 1e12;
-const MAX_CLICKS_PER_SECOND = 30;
-const MAX_RANK = 72;
-const LAST_PERK_RANK = 71; // Rank 72 is the final title, not another ordinary perk.
+const MAX_BALANCE = GAME_RULES.finishValue;
+const MAX_PURCHASE_MULTIPLIER = GAME_RULES.maxPurchaseMultiplier;
+const MAX_ECONOMY_MULTIPLIER = GAME_RULES.economyMultiplierCap;
+const MAX_CLICKS_PER_SECOND = GAME_RULES.maxClicksPerSecond;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -46,34 +81,15 @@ const ITEMS: any[] = [
   ['crit','crit',2200,.015,0],['lucky','lucky',900,1,0],['offline','offline',4000,.5,0],
 ].map(([id,type,cost,power,unlockRank]) => ({ id, type, cost, power, unlockRank }));
 
-// The browser version has 63 rank tiers: 63 click, 63 auto and 31 multiplier upgrades.
-for (let tier = 1; tier <= MAX_RANK; tier++) {
+for (let tier = 1; tier <= GAME_RULES.upgradeTierCount; tier++) {
   const scale = 10 ** (tier - 1);
-  ITEMS.push({
-    id: `rank-click-${String(tier).padStart(2,'0')}`,
-    type: 'click',
-    cost: Math.max(4, scale * 4),
-    power: Math.max(1, Math.round(scale * .07)),
-    unlockRank: tier,
-  });
-  ITEMS.push({
-    id: `rank-auto-${String(tier).padStart(2,'0')}`,
-    type: 'auto',
-    cost: Math.max(4, scale * 4.4),
-    power: Math.max(.2, scale * .02),
-    unlockRank: tier,
-  });
+  ITEMS.push({ id: `rank-click-${String(tier).padStart(2,'0')}`, type:'click', cost:Math.max(4,scale*4), power:Math.max(1,Math.round(scale*.07)), unlockRank:tier });
+  ITEMS.push({ id: `rank-auto-${String(tier).padStart(2,'0')}`, type:'auto', cost:Math.max(4,scale*4.4), power:Math.max(.2,scale*.02), unlockRank:tier });
 }
-for (let step = 1; step <= Math.floor(MAX_RANK / 2); step++) {
+for (let step = 1; step <= GAME_RULES.upgradeTierCount / 2; step++) {
   const tier = step * 2;
   const scale = 10 ** (tier - 1);
-  ITEMS.push({
-    id: `rank-mult-${String(step).padStart(2,'0')}`,
-    type: 'multi',
-    cost: Math.max(5, scale * 4.3),
-    power: 1.03 + step * .0015,
-    unlockRank: tier,
-  });
+  ITEMS.push({ id:`rank-mult-${String(step).padStart(2,'0')}`, type:'multi', cost:Math.max(5,scale*4.3), power:1.03+step*.0015, unlockRank:tier });
 }
 
 const PERKS: [string, number, number][] = [
@@ -89,7 +105,6 @@ const ACHIEVEMENTS: [string, (s:any)=>boolean, number][] = [
   ['p40',s=>(s.pets||[]).length>=40,75000],['rb1',s=>s.rebirths>=1,5000],
   ['rb5',s=>s.rebirths>=5,50000],['lv10',s=>s.level>=10,3000],['lv25',s=>s.level>=25,25000],
 ];
-
 const PETS: any[] = [
   {name:'Pofuduk Kedi',icon:'🐱',rarity:'common',min:5,max:12},
   {name:'Minik Köpek',icon:'🐶',rarity:'common',min:6,max:13},
@@ -161,19 +176,65 @@ const PETS: any[] = [
   {name:'Yaratılışın Son Anahtarı',icon:'🗝️',rarity:'sexvigintillion',unlockRank:66,min:11000000,max:18000000},
   {name:'Tresvigintilyon Başlangıcı',icon:'🌌',rarity:'septemvigintillion',unlockRank:72,min:22000000,max:36000000},
   {name:'Son Evren Anka',icon:'🔥',rarity:'septemvigintillion',unlockRank:72,min:30000000,max:50000000}
+].map((pet:any)=>({...pet,unlockRank:pet.unlockRank??0}));
+const RARITIES: [string, number, number][] = [
+  ['common',34,0],
+  ['uncommon',25,0],
+  ['rare',18,0],
+  ['epic',12,0],
+  ['legendary',7,0],
+  ['mythic',2.5,0],
+  ['secret',0.9,0],
+  ['celestial',0.3,0],
+  ['divine',0.18,15],
+  ['eternal',0.09,18],
+  ['infinite',0.045,24],
+  ['nonillion',0.015,30],
+  ['vigintillion',0.009,33],
+  ['unvigintillion',0.006,36],
+  ['duovigintillion',0.003,42],
+  ['tresvigintillion',0.001,48],
+  ['quattuorvigintillion',0.0008,54],
+  ['quinvigintillion',0.0006,60],
+  ['sexvigintillion',0.0004,66],
+  ['septemvigintillion',0.0002,72],
+];
+const NUMBER_UNITS: [number, string, string][] = [
+  [3,'Bin','Bin'],[6,'Milyon','Milyon'],[9,'Milyar','Milyar'],[12,'Trilyon','Trilyon'],
+  [15,'Katrilyon','Katrilyon'],[18,'Kentilyon','Kentilyon'],[21,'Sekstilyon','Sekstilyon'],
+  [24,'Septilyon','Septilyon'],[27,'Oktilyon','Oktilyon'],[30,'Nonilyon','Nonilyon'],
+  [33,'Decilyon','Decilyon'],[36,'Undecilyon','Undecilyon'],[39,'Duodecilyon','Duodecilyon'],
+  [42,'Tredecilyon','Tredecilyon'],[45,'Quattuordecilyon','Quattuordecilyon'],
+  [48,'Quindecilyon','Quindecilyon'],[51,'Sexdecilyon','Sexdecilyon'],
+  [54,'Septendecilyon','Septendecilyon'],[57,'Octodecilyon','Octodecilyon'],
+  [60,'Novemdecilyon','Novemdecilyon'],[63,'Vigintilyon','Vigintilyon'],
+  [66,'Unvigintilyon','Unvigintilyon'],[69,'Duovigintilyon','Duovigintilyon'],
+  [72,'Tresvigintilyon','Tresvigintilyon'],
 ];
 
-// Same chances as the 73-rank browser game. Higher rarities remain rank-gated.
-const RARITIES: [string, number, number][] = [
-  ['common',34,0],['uncommon',25,0],['rare',18,0],['epic',12,0],['legendary',7,0],
-  ['mythic',2.5,0],['secret',.9,0],['celestial',.3,0],['divine',.18,15],
-  ['eternal',.09,18],['infinite',.045,24],['nonillion',.015,30],['vigintillion',.009,33],['unvigintillion',.006,36],['duovigintillion',.003,42],['tresvigintillion',.001,48],['quattuorvigintillion',.0008,54],['quinvigintillion',.0006,60],['sexvigintillion',.0004,66],['septemvigintillion',.0002,72],
-];
-const PET_RARITY_VALUE: Record<string, number> = {
-  common:1, uncommon:1.25, rare:1.7, epic:2.4, legendary:3.5, mythic:5,
-  secret:7.5, celestial:11, divine:16, eternal:24, infinite:36, nonillion:55,
-  vigintillion:70,unvigintillion:90,duovigintillion:115,tresvigintillion:145,quattuorvigintillion:180,quinvigintillion:225,sexvigintillion:280,septemvigintillion:350,
-};
+if(GAME_RULES.finishExponent+1!==GAME_RULES.rankCount||GAME_RULES.finishValue!==10**GAME_RULES.finishExponent
+  ||ITEMS.length!==GAME_RULES.itemCount||PETS.length!==GAME_RULES.petCount||RARITIES.length!==GAME_RULES.rarityCount
+  ||NUMBER_UNITS.length!==GAME_RULES.numberUnitCount
+  ||NUMBER_UNITS.find(([exp])=>exp===GAME_RULES.finishExponent)?.[1]!==GAME_RULES.finishNameTurkish) {
+  throw new Error('GAME_RULES catalog mismatch: update index.ts and index.html together.');
+}
+
+function fnv1a64(value: string) {
+  let hash = 0xcbf29ce484222325n;
+  const prime = 0x100000001b3n;
+  for(let index=0;index<value.length;index++) {
+    hash = BigInt.asUintN(64, (hash ^ BigInt(value.charCodeAt(index))) * prime);
+  }
+  return hash.toString(16).padStart(16,'0');
+}
+const GAME_RULES_FINGERPRINT = fnv1a64(JSON.stringify({
+  rules:Object.keys(GAME_RULES).sort().map((key)=>[key,(GAME_RULES as any)[key]]),
+  rankThresholds:Array.from({length:GAME_RULES.rankCount},(_,index)=>[index,index===0?0:Math.pow(10,index)]),
+  numberUnits:NUMBER_UNITS,
+  items:ITEMS.map((item:any)=>[item.id,item.type,Number(item.cost),Number(item.power),Number(item.unlockRank||0)]),
+  pets:PETS.map((pet:any)=>[pet.name,pet.icon,pet.rarity,Number(pet.min),Number(pet.max),Number(pet.unlockRank||0)]),
+  rarities:RARITIES.map(([rarity,weight,unlock])=>[rarity,weight,unlock]),
+}));
 
 class ApiError extends Error {
   status: number;
@@ -192,29 +253,28 @@ function cleanName(value: unknown) {
 }
 function defaults(displayName = 'Oyuncu') {
   const now = Date.now();
-  const next = now + 55000 + Math.floor(Math.random()*45000);
+  const next = now + GAME_RULES.goldenSpawnBaseMs + Math.floor(Math.random()*GAME_RULES.goldenSpawnJitterMs);
   return {
-    balanceVersion:4, money:0, total:0, clicks:0, best:0, owned:{}, multi:1,
+    balanceVersion:GAME_RULES.version, money:0, total:0, clicks:0, best:0, owned:{}, multi:1,
     pets:[], equippedPet:null, equippedPets:[], rebirths:0, level:1, xp:0,
     questProgress:0, questClaimed:false, questDate:trDayKey(), dailyLast:0, dailyStreak:0,
     achievements:{}, redeemed:[], settings:{sound:true,particles:true,crit:true,autosave:true,leaderboard:false,theme:'midnight'},
     displayName:cleanName(displayName), rankAnnounced:0, gameCompleted:false,
     boostUntil:0, boostType:'all', boostMultiplier:1, totalClicksEver:0,
-    serverVerified:true, lastTickAt:now, goldenNextAt:next, goldenExpiresAt:next+12000,
+    serverVerified:true, lastTickAt:now, goldenNextAt:next, goldenExpiresAt:next+GAME_RULES.goldenVisibleMs,
     clickWindowStart:0, clickWindowCount:0, lastSave:now,
   };
 }
 function ownedCount(s: any) { return Object.values(s.owned || {}).reduce((sum:any,n:any)=>sum+(Number(n)||0),0) as number; }
 function rankIndex(total: number) {
   let index=0;
-  const value=Math.max(0,Number(total)||0);
-  for(let i=1;i<=MAX_RANK;i++){ if(value>=10**i) index=i; else break; }
+  for(let i=1;i<=GAME_RULES.finishExponent;i++){ if(total>=10**i) index=i; else break; }
   return index;
 }
 function rankPerks(s: any) {
   const totals:any={click:0,auto:0,pet:0,luck:0,crit:0,discount:0};
   const rank=rankIndex(Number(s.total)||0);
-  for(let i=1;i<=Math.min(rank,LAST_PERK_RANK);i++){
+  for(let i=1;i<=Math.min(rank,GAME_RULES.perkRankCap);i++){
     const item=PERKS[(i-1)%PERKS.length];
     const cycle=Math.floor((i-1)/PERKS.length);
     totals[item[0]]+=item[1]+item[2]*cycle;
@@ -224,13 +284,10 @@ function rankPerks(s: any) {
 function petBonus(s: any,p=rankPerks(s)) {
   const ids=Array.isArray(s.equippedPets)?s.equippedPets:(s.equippedPet?[s.equippedPet]:[]);
   const raw=(s.pets||[]).filter((pet:any)=>ids.includes(pet.id)).reduce((sum:number,pet:any)=>sum+Math.max(0,Number(pet.power)||0)/100,0);
-  return Math.min(1.8,Math.log10(1+raw)*.45)*(1+Math.min(.5,p.pet));
+  return Math.min(GAME_RULES.petBonusCap,Math.log10(1+raw)*.45)*(1+Math.min(GAME_RULES.petRankBonusCap,p.pet));
 }
 function ecoMultiplier(s:any,p=rankPerks(s)) {
-  // Browser formula: all rebirths keep adding +5%; there is no 10-rebirth cap.
-  const rebirths=Math.max(0,Number(s.rebirths)||0);
-  return Math.min(MAX_ECONOMY_MULTIPLIER,
-    Math.max(1,Number(s.multi)||1)*(1+rebirths*.05)*(1+petBonus(s,p))*(1+rankIndex(Number(s.total)||0)*.015));
+  return Math.min(MAX_ECONOMY_MULTIPLIER, Math.max(1,Number(s.multi)||1)*(1+Math.max(0,Number(s.rebirths)||0)*GAME_RULES.rebirthBonusPerLevel)*(1+petBonus(s,p))*(1+rankIndex(Number(s.total)||0)*GAME_RULES.rankIncomeBonusPerLevel));
 }
 function weeklyMultiplier(now:number) {
   return new Date(now).toLocaleString('en-US',{timeZone:'Europe/Istanbul',weekday:'short'})==='Fri'?1.5:1;
@@ -255,10 +312,11 @@ function powers(s:any,now:number) {
 }
 function xpNeeded(level:number) { return Math.floor(80*Math.pow(1.35,Math.max(0,level-1))); }
 function addMoney(s:any,amount:number,xpGain=true) {
-  const requested=Number(amount)||0;
-  const gain=Math.max(0,Math.min(Number.isFinite(requested)?requested:MAX_BALANCE,MAX_BALANCE-(Number(s.money)||0)));
-  s.money=Math.min(MAX_BALANCE,(Number(s.money)||0)+gain);
-  s.total=Math.min(MAX_BALANCE,(Number(s.total)||0)+gain);
+  const previousMoney=Math.max(0,Number(s.money)||0);
+  const previousTotal=Math.max(previousMoney,Number(s.total)||0);
+  const gain=Math.max(0,Math.min(Number(amount)||0,MAX_BALANCE-previousMoney));
+  s.money=Math.min(MAX_BALANCE,previousMoney+gain);
+  s.total=previousTotal+gain;
   s.best=Math.max(Number(s.best)||0,s.money);
   if(xpGain&&gain>0){
     s.xp=(Number(s.xp)||0)+Math.max(1,Math.floor(Math.log10(gain+1)*2));
@@ -273,18 +331,12 @@ function costOf(s:any,it:any,p=rankPerks(s)) {
 }
 function remainingGap(s:any) {
   const rank=rankIndex(Number(s.total)||0);
-  return rank<MAX_RANK?Math.max(1,10**(rank+1)-(Number(s.total)||0)):Math.max(1,MAX_BALANCE-(Number(s.money)||0));
+  return rank<GAME_RULES.finishExponent?Math.max(1,10**(rank+1)-(Number(s.total)||0)):Math.max(1,MAX_BALANCE-(Number(s.money)||0));
 }
 function eggPrice(s:any,p=rankPerks(s)) {
-  // Sınırsız pet koleksiyonu yumurta fiyatını kontrolsüz biçimde büyütmemeli.
-  // HTML tarafıyla aynı rütbe bazlı fiyat formülü.
-  const rank=rankIndex(Number(s.total)||0);
-  const rankScale=Math.pow(10,rank*.12);
-  return Math.min(MAX_BALANCE,Math.max(100,Math.floor(500*rankScale*(1-Math.min(.45,p.discount)))));
-}
-function petSellValue(s:any,pet:any,p=rankPerks(s)) {
-  const rarityFactor=PET_RARITY_VALUE[pet?.rarity]||1;
-  return Math.max(1,Math.floor(Math.max(0,Number(pet?.power)||0)*Math.max(8,eggPrice(s,p)*.018)*rarityFactor));
+  const rankScale=Math.pow(10,rankIndex(Number(s.total)||0)*.12);
+  const discount=Math.min(.45,p.discount);
+  return Math.min(MAX_BALANCE,Math.max(100,Math.floor(500*rankScale*(1-discount))));
 }
 function awardAchievements(s:any,now:number) {
   const newly:any[]=[];
@@ -302,7 +354,7 @@ function awardAchievements(s:any,now:number) {
 }
 function rarityFor(s:any) {
   const rank=rankIndex(Number(s.total)||0), perks=rankPerks(s);
-  const available=RARITIES.filter(([rarity,_weight,unlock])=>unlock<=rank&&PETS.some(p=>p.rarity===rarity&&(p.unlockRank||0)<=rank));
+  const available=RARITIES.filter(([rarity,_weight,unlock])=>unlock<=rank&&PETS.some(p=>p.rarity===rarity&&p.unlockRank<=rank));
   const weighted=available.map(([rarity,weight],index)=>({rarity,weight:weight*(1+perks.luck*(available.length<=1?0:index/(available.length-1))*2)}));
   const sum=weighted.reduce((n,item)=>n+item.weight,0)||1;
   let roll=Math.random()*sum;
@@ -323,7 +375,7 @@ function errorResponse(err:unknown) {
   const status=e instanceof ApiError?e.status:500;
   const message=e instanceof ApiError?e.message:'Sunucu işlemi tamamlayamadı. Biraz sonra tekrar dene.';
   if(!(e instanceof ApiError)) console.error('game-api error',err);
-  return new Response(JSON.stringify({error:message,code:e?.code||'server_error'}),{status,headers:corsHeaders});
+  return new Response(JSON.stringify({error:message,code:e?.code||'server_error',rulesVersion:GAME_RULES.version,rulesFingerprint:GAME_RULES_FINGERPRINT}),{status,headers:corsHeaders});
 }
 
 async function firebaseIdentity(req:Request) {
@@ -364,16 +416,61 @@ async function saveProfileCAS(uid:string,oldRow:any,profile:any) {
   return data;
 }
 
+function normalizeProfile(profile:any,displayName='Oyuncu') {
+  const fresh=defaults(displayName);
+  const money=Math.min(MAX_BALANCE,Math.max(0,Number(profile?.money)||0));
+  const total=Math.max(money,Number(profile?.total)||0);
+  return {
+    ...fresh,...(profile||{}),
+    balanceVersion:GAME_RULES.version,
+    money,total,
+    best:Math.min(MAX_BALANCE,Math.max(money,Number(profile?.best)||0)),
+    clicks:Math.max(0,Math.floor(Number(profile?.clicks)||0)),
+    owned:profile?.owned&&typeof profile.owned==='object'&&!Array.isArray(profile.owned)?profile.owned:{},
+    pets:Array.isArray(profile?.pets)?profile.pets.slice(0,GAME_RULES.maxPets):[],
+    equippedPets:Array.isArray(profile?.equippedPets)?profile.equippedPets.slice(0,3):(profile?.equippedPet?[profile.equippedPet]:[]),
+    achievements:profile?.achievements&&typeof profile.achievements==='object'?profile.achievements:{},
+    redeemed:Array.isArray(profile?.redeemed)?profile.redeemed:[],
+    settings:{...fresh.settings,...(profile?.settings||{})},
+    displayName:cleanName(profile?.displayName||displayName),
+    level:Math.max(1,Math.floor(Number(profile?.level)||1)),
+    rebirths:Math.max(0,Math.floor(Number(profile?.rebirths)||0)),
+    multi:Math.max(1,Math.min(MAX_PURCHASE_MULTIPLIER,Number(profile?.multi)||1)),
+    serverVerified:profile?.serverVerified===true,
+    gameCompleted:money>=MAX_BALANCE,
+  };
+}
+
 async function bootstrap(uid:string,displayName:string) {
   for(let attempt=0;attempt<5;attempt++){
     const row=await getRow(uid);
-    if(row) return {profile:row.profile,created:false};
+    if(row){
+      if(row.profile?.serverVerified!==true) throw new ApiError('Profil doğrulanmadı. Güvenli yeni kayıt oluşturulmalı.',409,'unverified_profile');
+      const normalized=normalizeProfile(row.profile,displayName);
+      if(Number(row.profile?.balanceVersion)!==GAME_RULES.version){
+        const migrated=await saveProfileCAS(uid,row,normalized);
+        if(!migrated)continue;
+        return {profile:migrated.profile,created:false};
+      }
+      return {profile:normalized,created:false};
+    }
     const fresh=defaults(displayName);
     const created=await insertNewProfile(uid,fresh);
     if(created) return {profile:created.profile,created:true};
   }
   throw new ApiError('Profil başlatılamadı. Tekrar dene.',409,'profile_conflict');
 }
+
+const PET_RARITY_VALUE:Record<string,number>={common:1,uncommon:1.25,rare:1.7,epic:2.4,legendary:3.5,mythic:5,secret:7.5,celestial:11,divine:16,eternal:24,infinite:36,nonillion:55,vigintillion:70,unvigintillion:90,duovigintillion:115,tresvigintillion:145,quattuorvigintillion:180,quinvigintillion:225,sexvigintillion:280,septemvigintillion:350};
+function petSellValue(s:any,pet:any,p=rankPerks(s)) {
+  const rarityFactor=PET_RARITY_VALUE[pet?.rarity]||1;
+  return Math.max(1,Math.floor(Math.max(0,Number(pet?.power)||0)*Math.max(8,eggPrice(s,p)*.018)*rarityFactor));
+}
+function fusionBaseName(p:any) {
+  return String(p?.baseName||p?.name||'Pet').replace(/^(?:(?:Gelişmiş)(?:\s+Seviye\s+\d+)?\s+)+/i,'').trim();
+}
+function fusionLevel(p:any) { return Math.max(0,Math.floor(Number(p?.fuseLevel)||((p?.fused)?1:0))); }
+function fusionKey(p:any) { return `${fusionBaseName(p)}|${p?.rarity||'common'}|${fusionLevel(p)}`; }
 
 async function mutate(uid:string,action:string,input:any,identityName:string) {
   for(let attempt=0;attempt<5;attempt++){
@@ -383,16 +480,16 @@ async function mutate(uid:string,action:string,input:any,identityName:string) {
       if(!created) continue;
       row=created;
     }
-    const s=structuredClone(row.profile||defaults(identityName));
-    if(s.serverVerified!==true) throw new ApiError('Profil doğrulanmadı. Güvenli yeni kayıt oluşturulmalı.',409,'unverified_profile');
+    if(row.profile?.serverVerified!==true) throw new ApiError('Profil doğrulanmadı. Güvenli yeni kayıt oluşturulmalı.',409,'unverified_profile');
+    const s=normalizeProfile(structuredClone(row.profile||defaults(identityName)),identityName);
     const now=Date.now();
     const p=powers(s,now);
-    let gain=0,crit=false,pet=null;
+    let gain=0,crit=false,pet=null,openedPets:any[]|null=null;
     let newBoost=null;
 
     if(action==='click'){
       const count=Number(input.count??1);
-      if(!Number.isInteger(count)||count<1||count>30) throw new ApiError('Tıklama paketi geçersiz.',400,'bad_click_count');
+      if(!Number.isInteger(count)||count<1||count>GAME_RULES.maxClickBatch) throw new ApiError('Tıklama paketi geçersiz.',400,'bad_click_count');
       if(now-(Number(s.clickWindowStart)||0)>=1000){s.clickWindowStart=now;s.clickWindowCount=0;}
       if((Number(s.clickWindowCount)||0)+count>MAX_CLICKS_PER_SECOND) throw new ApiError('Çok hızlı tıklıyorsun. Biraz yavaşla.',429,'click_rate_limit');
       s.clickWindowCount=(Number(s.clickWindowCount)||0)+count;
@@ -403,7 +500,7 @@ async function mutate(uid:string,action:string,input:any,identityName:string) {
         if((Number(s.owned?.lucky)||0)>0) one+=Math.floor(one*(.03+Math.random()*.08));
         gain+=one;
       }
-      addMoney(s,gain,true);
+      gain=addMoney(s,gain,true);
       s.clicks=(Number(s.clicks)||0)+count;
       s.totalClicksEver=(Number(s.totalClicksEver)||0)+count;
       if(s.questDate!==trDayKey()){s.questDate=trDayKey();s.questProgress=0;s.questClaimed=false;}
@@ -430,7 +527,7 @@ async function mutate(uid:string,action:string,input:any,identityName:string) {
     }else if(action==='claimDaily'){
       const last=Number(s.dailyLast)||0;
       if(now-last<86400000*.9) throw new ApiError('Yarın tekrar gel!',400,'daily_already_claimed');
-      s.dailyStreak=Math.min(30,now-last<86400000*1.5?(Number(s.dailyStreak)||0)+1:1);
+      s.dailyStreak=Math.min(GAME_RULES.maxDailyStreak,now-last<86400000*1.5?(Number(s.dailyStreak)||0)+1:1);
       s.dailyLast=now;
       const reward=Math.max(200+s.dailyStreak*50+(Number(s.level)||1)*15,Math.floor(p.click*18+p.auto*45));
       gain=addMoney(s,reward,true);
@@ -438,48 +535,92 @@ async function mutate(uid:string,action:string,input:any,identityName:string) {
     }else if(action==='golden'){
       if(now<(Number(s.goldenNextAt)||0)||now>(Number(s.goldenExpiresAt)||0)) throw new ApiError('Altın Robux artık ekranda değil.',400,'golden_not_available');
       gain=Math.max(1,Math.floor(Math.min(remainingGap(s)*.0025,Math.max(p.click*8,p.auto*12,100))));
-      addMoney(s,gain,false);
+      gain=addMoney(s,gain,false);
       const roll=Math.random();
-      if(roll<.4){s.boostType='click';s.boostMultiplier=2;s.boostUntil=now+30000;}
-      else if(roll<.8){s.boostType='auto';s.boostMultiplier=2;s.boostUntil=now+30000;}
-      else{s.boostType='all';s.boostMultiplier=1.5;s.boostUntil=now+35000;}
-      s.goldenNextAt=now+55000+Math.floor(Math.random()*45000);
-      s.goldenExpiresAt=s.goldenNextAt+12000;
+      if(roll<GAME_RULES.goldenClickChance){s.boostType='click';s.boostMultiplier=2;s.boostUntil=now+GAME_RULES.goldenClickDurationMs;}
+      else if(roll<GAME_RULES.goldenAutoChance){s.boostType='auto';s.boostMultiplier=2;s.boostUntil=now+GAME_RULES.goldenAutoDurationMs;}
+      else{s.boostType='all';s.boostMultiplier=1.5;s.boostUntil=now+GAME_RULES.goldenAllDurationMs;}
+      s.goldenNextAt=now+GAME_RULES.goldenSpawnBaseMs+Math.floor(Math.random()*GAME_RULES.goldenSpawnJitterMs);
+      s.goldenExpiresAt=s.goldenNextAt+GAME_RULES.goldenVisibleMs;
       newBoost={type:s.boostType,multiplier:s.boostMultiplier,until:s.boostUntil};
 
     }else if(action==='missGolden'){
       if(now>(Number(s.goldenExpiresAt)||0)){
-        s.goldenNextAt=now+55000+Math.floor(Math.random()*45000);
-        s.goldenExpiresAt=s.goldenNextAt+12000;
+        s.goldenNextAt=now+GAME_RULES.goldenSpawnBaseMs+Math.floor(Math.random()*GAME_RULES.goldenSpawnJitterMs);
+        s.goldenExpiresAt=s.goldenNextAt+GAME_RULES.goldenVisibleMs;
       }
 
     }else if(action==='tick'){
       const last=Number(s.lastTickAt)||now;
-      const elapsed=Math.min(12*60*60,Math.max(0,(now-last)/1000));
+      const elapsed=Math.min(GAME_RULES.offlineCapSeconds,Math.max(0,(now-last)/1000));
       s.lastTickAt=now;
       if(elapsed>0&&p.auto>0){
         const offlineBonus=1+(Number(s.owned?.offline)||0)*.5;
-        gain=Math.floor(Math.min(p.auto*elapsed*offlineBonus*.45,remainingGap(s)*.12));
-        if(gain>0)addMoney(s,gain,true);
+        gain=Math.floor(Math.min(p.auto*elapsed*offlineBonus*GAME_RULES.offlineGainMultiplier,remainingGap(s)*GAME_RULES.offlineRankProgressMultiplier));
+        if(gain>0)gain=addMoney(s,gain,true);
       }
 
     }else if(action==='egg'){
       const count=Number(input.count??1);
-      if(!Number.isSafeInteger(count)||count<1||count>1000) throw new ApiError('Bir açılışta 1 ile 1.000 arasında yumurta açabilirsin.',400,'bad_egg_count');
-      const price=eggPrice(s,p)*count;
-      if((Number(s.money)||0)<price) throw new ApiError('Yeterli Robux yok.',400,'not_enough_money');
-      s.money-=price;
-      const rank=rankIndex(Number(s.total)||0); const opened=[];
-      for(let n=0;n<count;n++){
-        const rarity=rarityFor(s); const pool=PETS.filter(x=>x.rarity===rarity&&(x.unlockRank||0)<=rank);
+      if(!Number.isSafeInteger(count)||count<1||count>GAME_RULES.maxEggsPerOpen) throw new ApiError('Yumurta sayısı geçersiz.',400,'bad_egg_count');
+      s.pets=Array.isArray(s.pets)?s.pets:[];
+      if(s.pets.length+count>GAME_RULES.maxPets) throw new ApiError(`En fazla ${GAME_RULES.maxPets} pet saklayabilirsin.`,400,'pets_full');
+      const price=eggPrice(s,p),totalPrice=price*count;
+      if((Number(s.money)||0)<totalPrice) throw new ApiError('Yeterli Robux yok.',400,'not_enough_money');
+      s.money-=totalPrice;
+      const rank=rankIndex(Number(s.total)||0);
+      s.equippedPets=Array.isArray(s.equippedPets)?s.equippedPets:[];
+      openedPets=[];
+      for(let index=0;index<count;index++){
+        const rarity=rarityFor(s);
+        const pool=PETS.filter(x=>x.rarity===rarity&&(x.unlockRank??0)<=rank);
         const base=pool[Math.floor(Math.random()*pool.length)]||PETS[0];
-        const newPet={id:`p${now}${crypto.randomUUID().slice(0,8)}`,name:base.name,icon:base.icon,rarity:base.rarity,
-          power:Math.floor((base.min+Math.random()*(base.max-base.min+1))*(1+rank*.08)),createdAt:now};
-        s.pets=s.pets||[];s.pets.push(newPet);opened.push(newPet);
-        s.equippedPets=Array.isArray(s.equippedPets)?s.equippedPets:[];
-        if(s.equippedPets.length<3)s.equippedPets.push(newPet.id);
+        const rawPower=Math.floor(base.min+Math.random()*(base.max-base.min+1));
+        const created={
+          id:`p${now}${crypto.randomUUID().slice(0,8)}`,
+          name:base.name,baseName:base.name,icon:base.icon,rarity:base.rarity,
+          power:Math.floor(rawPower*(1+rank*GAME_RULES.eggPetRankBonusPerLevel)),createdAt:now,fuseLevel:0
+        };
+        s.pets.push(created);
+        openedPets.push(created);
+        if(s.equippedPets.length<3)s.equippedPets.push(created.id);
       }
-      pet=opened[0]||null;s.equippedPet=s.equippedPets[0]||null;
+      pet=openedPets[0]||null;
+      s.equippedPet=s.equippedPets[0]||null;
+
+    }else if(action==='sellPet'){
+      const id=String(input.petId||'');
+      const index=(s.pets||[]).findIndex((item:any)=>String(item.id)===id);
+      if(index<0) throw new ApiError('Bu pet sende yok.',404,'pet_not_found');
+      const target=s.pets[index];
+      const value=petSellValue(s,target,p);
+      s.pets.splice(index,1);
+      s.equippedPets=(Array.isArray(s.equippedPets)?s.equippedPets:[]).filter((item:string)=>item!==id);
+      s.equippedPet=s.equippedPets[0]||null;
+      gain=addMoney(s,value,true);
+
+    }else if(action==='fusePet'){
+      const ids=Array.isArray(input.petIds)?input.petIds.map((id:any)=>String(id)):[];
+      if(ids.length!==3||new Set(ids).size!==3) throw new ApiError('Birleştirmek için 3 farklı pet seçmelisin.',400,'bad_fusion_selection');
+      const chosen=ids.map((id:string)=>(s.pets||[]).find((item:any)=>String(item.id)===id));
+      if(chosen.some((item:any)=>!item)) throw new ApiError('Seçilen petlerden biri koleksiyonda bulunamadı.',404,'pet_not_found');
+      if(new Set(chosen.map((item:any)=>fusionKey(item))).size!==1) throw new ApiError('Aynı tür, nadirlik ve geliştirme seviyesinde 3 pet seçmelisin.',400,'fusion_mismatch');
+      const baseName=fusionBaseName(chosen[0]);
+      const nextLevel=Math.max(...chosen.map((item:any)=>fusionLevel(item)))+1;
+      const fused={
+        ...chosen[0],id:`f${now}${crypto.randomUUID().slice(0,8)}`,baseName,
+        fuseLevel:nextLevel,
+        name:nextLevel===1?`Gelişmiş ${baseName}`:`Gelişmiş Seviye ${nextLevel} ${baseName}`,
+        power:Math.floor(chosen.reduce((sum:number,item:any)=>sum+(Number(item.power)||0),0)*1.35),
+        rarity:chosen[0].rarity,createdAt:now,fused:true
+      };
+      const idSet=new Set(ids);
+      s.pets=(s.pets||[]).filter((item:any)=>!idSet.has(String(item.id)));
+      s.pets.push(fused);
+      s.equippedPets=(Array.isArray(s.equippedPets)?s.equippedPets:[]).filter((id:string)=>!idSet.has(String(id)));
+      if(s.equippedPets.length<3)s.equippedPets.push(fused.id);
+      s.equippedPet=s.equippedPets[0]||null;
+      pet=fused;
 
     }else if(action==='equipPet'){
       const id=String(input.petId||'');
@@ -490,41 +631,10 @@ async function mutate(uid:string,action:string,input:any,identityName:string) {
       else throw new ApiError('En fazla 3 pet takabilirsin.',400,'pet_slots_full');
       s.equippedPet=s.equippedPets[0]||null;
 
-    }else if(action==='sellPet'){
-      const id=String(input.petId||'');
-      const petIndex=(s.pets||[]).findIndex((x:any)=>x.id===id);
-      if(petIndex<0) throw new ApiError('Satılacak pet bulunamadı.',404,'pet_not_found');
-      const soldPet=s.pets[petIndex];
-      const saleValue=petSellValue(s,soldPet,p); // Use collection size before the sale, matching Local Mode.
-      s.pets.splice(petIndex,1);
-      s.equippedPets=Array.isArray(s.equippedPets)?s.equippedPets.filter((x:string)=>x!==id):[];
-      s.equippedPet=s.equippedPets[0]||null;
-      pet=soldPet;
-      gain=addMoney(s,saleValue,true);
-
-    }else if(action==='fusePet'){
-      const ids=Array.isArray(input.petIds)?input.petIds.map(String):[];
-      if(ids.length!==3||new Set(ids).size!==3) throw new ApiError('Fuse için tam 3 farklı pet seç.',400,'bad_fuse_selection');
-      const selected=(s.pets||[]).filter((x:any)=>ids.includes(x.id));
-      if(selected.length!==3) throw new ApiError('Seçilen petlerden biri bulunamadı.',404,'pet_not_found');
-      const baseName=(x:any)=>String(x.baseName||x.name||'Pet').replace(/^(?:(?:Gelişmiş)(?:\s+Seviye\s+\d+)?\s+)+/i,'').trim();
-      const fuseLevel=(x:any)=>Math.max(0,Math.floor(Number(x.fuseLevel)||((x.fused)?1:0)));
-      const key=(x:any)=>`${baseName(x)}|${x.rarity||'common'}|${fuseLevel(x)}`;
-      if(new Set(selected.map(key)).size!==1) throw new ApiError('Üç pet aynı tür, nadirlik ve geliştirme seviyesinde olmalı.',400,'pets_not_identical');
-      const fusedLevel=Math.max(...selected.map(fuseLevel))+1;
-      const fusedBaseName=baseName(selected[0]);
-      const fused={...selected[0],id:`f${now}${crypto.randomUUID().slice(0,8)}`,baseName:fusedBaseName,fuseLevel:fusedLevel,
-        name:fusedLevel===1?`Gelişmiş ${fusedBaseName}`:`Gelişmiş Seviye ${fusedLevel} ${fusedBaseName}`,
-        power:Math.floor(selected.reduce((sum:number,x:any)=>sum+(Number(x.power)||0),0)*1.35),createdAt:now,fused:true};
-      s.pets=(s.pets||[]).filter((x:any)=>!ids.includes(x.id));s.pets.push(fused);
-      s.equippedPets=Array.isArray(s.equippedPets)?s.equippedPets.filter((id:string)=>!ids.includes(id)):[];
-      if(s.equippedPets.length<3)s.equippedPets.push(fused.id);s.equippedPet=s.equippedPets[0]||null;pet=fused;
-
     }else if(action==='rebirth'){
-      const rebirths=Math.max(0,Number(s.rebirths)||0);
-      const need=Math.floor(10000*Math.pow(2.2,rebirths));
+      const need=Math.floor(10000*Math.pow(2.2,Number(s.rebirths)||0));
       if((Number(s.money)||0)<need) throw new ApiError('Rebirth için yeterli Robux yok.',400,'not_enough_money');
-      s.rebirths=rebirths+1;
+      s.rebirths=(Number(s.rebirths)||0)+1;
       s.money=0;s.owned={};s.multi=1;s.questProgress=0;s.questClaimed=false;
 
     }else if(action==='reset'){
@@ -552,12 +662,12 @@ async function mutate(uid:string,action:string,input:any,identityName:string) {
 
     const achievements=action==='savePreferences'||action==='missGolden'?[]:awardAchievements(s,now);
     s.rankAnnounced=Math.max(Number(s.rankAnnounced)||0,rankIndex(Number(s.total)||0));
-    s.gameCompleted=(Number(s.money)||0)>=MAX_BALANCE;
+    s.gameCompleted=(Number(s.money)||0)>=GAME_RULES.finishValue;
+    s.balanceVersion=GAME_RULES.version;
     s.lastSave=now;
     const updated=await saveProfileCAS(uid,row,s);
     if(!updated) continue;
-    const openedPets=action==='egg'?(s.pets||[]).slice(-Number(input.count||1)):undefined;
-    return {profile:updated.profile,gain,crit,pet,pets:openedPets,achievements,action,boost:newBoost};
+    return {rulesVersion:GAME_RULES.version,rulesFingerprint:GAME_RULES_FINGERPRINT,profile:updated.profile,gain,crit,pet,pets:openedPets||undefined,achievements,action,boost:newBoost};
   }
   throw new ApiError('Aynı anda çok fazla kayıt geldi. Tekrar dene.',409,'profile_conflict');
 }
@@ -579,12 +689,13 @@ Deno.serve(async (req:Request) => {
     const identity=await firebaseIdentity(req);
     const body=await req.json().catch(()=>({}));
     const action=String(body.action||'');
+    if(Number(body.rulesVersion)!==GAME_RULES.version||String(body.rulesFingerprint||'')!==GAME_RULES_FINGERPRINT) throw new ApiError('Oyun verileri eşleşmiyor. index.html ve Supabase index.ts dosyalarının ikisini de aynı sürümle dağıt.',409,'rules_version_mismatch');
     if(action==='bootstrap'){
       const result=await bootstrap(identity.uid,cleanName(body.displayName||identity.displayName));
-      return new Response(JSON.stringify({profile:result.profile,created:result.created}),{headers:corsHeaders});
+      return new Response(JSON.stringify({rulesVersion:GAME_RULES.version,rulesFingerprint:GAME_RULES_FINGERPRINT,profile:result.profile,created:result.created}),{headers:corsHeaders});
     }
     if(action==='leaderboard'){
-      return new Response(JSON.stringify({rows:await leaderboard()}),{headers:corsHeaders});
+      return new Response(JSON.stringify({rulesVersion:GAME_RULES.version,rulesFingerprint:GAME_RULES_FINGERPRINT,rows:await leaderboard()}),{headers:corsHeaders});
     }
     const result=await mutate(identity.uid,action,body,identity.displayName);
     return new Response(JSON.stringify(result),{headers:corsHeaders});
